@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import BadgeMessages from '../../components/BadgeMessages'
 import { useNavigate } from 'react-router-dom'
 import { demandesApi } from '../../api/demandes'
 import type { DemandeAchat } from '../../types'
@@ -120,7 +121,7 @@ export default function MesDemandesPage() {
                       <tbody>
                         {demandesPage.map(da => (
                           <tr key={da.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/demandes/${da.id}`)}>
-                            <td style={tdS}><span style={{ fontWeight: 500 }}>{da.numero}</span></td>
+                            <td style={tdS}><span style={{ fontWeight: 500 }}>{da.numero}</span><BadgeMessages da={da} /></td>
                             <td style={tdS}>{fmt(da.date_demande)}</td>
                             <td style={tdS}>{da.type_da === 'medical' ? 'Médical' : 'Bien/Service'}</td>
                             <td style={tdS}>{MOTIF_LABELS[da.motif]}</td>

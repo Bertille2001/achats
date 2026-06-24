@@ -10,7 +10,7 @@ import aiofiles
 
 from app.models.models import (
     DemandeAchat, LigneDA, FichierDA, HistoriqueValidation,
-    StatutDA, ActionHistorique, RoleUtilisateur, Utilisateur
+    StatutDA, ActionHistorique, RoleUtilisateur, Utilisateur, Service, MessageDA
 )
 from app.schemas.schemas import DemandeAchatCreate
 from app.core.config import UPLOAD_PATH
@@ -32,6 +32,7 @@ def _load_options():
         selectinload(DemandeAchat.lignes),
         selectinload(DemandeAchat.fichiers),
         selectinload(DemandeAchat.historique).selectinload(HistoriqueValidation.utilisateur),
+        selectinload(DemandeAchat.messages).selectinload(MessageDA.auteur),
     ]
 
 
@@ -328,3 +329,88 @@ def _ajouter_historique(db, da_id, user_id, action, commentaire=None):
 def _verifier_role(user, role):
     if user.role not in (role, RoleUtilisateur.ADMIN):
         raise HTTPException(status_code=403, detail="Rôle insuffisant")
+
+
+async def peut_traiter_achats(db: AsyncSession, user: Utilisateur, da: DemandeAchat) -> bool:
+    """Le Service Achats (acheteur/admin) peut toujours traiter une DA.
+    Un service marqué `peut_traiter_soi_meme` (ex. Pharmacie) peut aussi traiter
+    lui-même ses propres commandes — n'importe quel utilisateur de ce service,
+    quel que soit son rôle de compte (pas de système multi-rôles nécessaire)."""
+    if user.role in (RoleUtilisateur.ACHETEUR, RoleUtilisateur.ADMIN):
+        return True
+    if not user.service or user.service != da.service_demandeur:
+        return False
+    result = await db.execute(select(Service).where(Service.nom == da.service_demandeur))
+    service = result.scalar_one_or_none()
+    return bool(service and service.peut_traiter_soi_meme)
+
+
+async def _verifier_traitement(db: AsyncSession, da: DemandeAchat, user: Utilisateur):
+    if da.statut != StatutDA.APPROUVEE:
+        raise HTTPException(status_code=400, detail="La demande doit être approuvée pour être traitée.")
+    if not await peut_traiter_achats(db, user, da):
+        raise HTTPException(status_code=403, detail="Réservé au Service Achats (ou au service autorisé à traiter ses propres commandes).")
+
+
+async def marquer_bc_cree(db: AsyncSession, da_id: int, user: Utilisateur) -> DemandeAchat:
+    da = await _get_da_or_404(db, da_id)
+    await _verifier_traitement(db, da, user)
+    if da.bc_cree_le is not None:
+        raise HTTPException(status_code=400, detail="Le bon de commande a déjà été marqué comme créé.")
+    da.bc_cree_par_id = user.id
+    da.bc_cree_le = datetime.utcnow()
+    _ajouter_historique(db, da.id, user.id, ActionHistorique.BC_CREE)
+    await db.flush()
+    return await _get_da_or_404(db, da_id)
+
+
+async def marquer_commande(db: AsyncSession, da_id: int, user: Utilisateur) -> DemandeAchat:
+    da = await _get_da_or_404(db, da_id)
+    await _verifier_traitement(db, da, user)
+    if da.bc_cree_le is None:
+        raise HTTPException(status_code=400, detail="Le bon de commande doit être créé avant de marquer la commande comme passée.")
+    if da.commande_le is not None:
+        raise HTTPException(status_code=400, detail="La commande a déjà été marquée comme passée.")
+    da.commande_par_id = user.id
+    da.commande_le = datetime.utcnow()
+    _ajouter_historique(db, da.id, user.id, ActionHistorique.COMMANDE_PASSEE)
+    await db.flush()
+    return await _get_da_or_404(db, da_id)
+
+
+async def marquer_livre(db: AsyncSession, da_id: int, user: Utilisateur) -> DemandeAchat:
+    da = await _get_da_or_404(db, da_id)
+    await _verifier_traitement(db, da, user)
+    if da.commande_le is None:
+        raise HTTPException(status_code=400, detail="La commande doit être passée avant de marquer la livraison comme reçue.")
+    if da.livre_le is not None:
+        raise HTTPException(status_code=400, detail="La livraison a déjà été marquée comme reçue.")
+    da.livre_par_id = user.id
+    da.livre_le = datetime.utcnow()
+    _ajouter_historique(db, da.id, user.id, ActionHistorique.LIVRAISON_RECUE)
+    await db.flush()
+    return await _get_da_or_404(db, da_id)
+
+
+def peut_voir_da(user: Utilisateur, da: DemandeAchat) -> bool:
+    """Même règle que pour consulter le détail d'une DA : un demandeur ne voit
+    que ses propres demandes, tous les autres rôles ont une vision globale."""
+    if user.role == RoleUtilisateur.DEMANDEUR:
+        return da.demandeur_id == user.id
+    return True
+
+
+async def lister_messages(db: AsyncSession, da_id: int, user: Utilisateur) -> list[MessageDA]:
+    da = await _get_da_or_404(db, da_id)
+    if not peut_voir_da(user, da):
+        raise HTTPException(status_code=403, detail="Accès refusé")
+    return da.messages
+
+
+async def envoyer_message(db: AsyncSession, da_id: int, user: Utilisateur, texte: str) -> DemandeAchat:
+    da = await _get_da_or_404(db, da_id)
+    if not peut_voir_da(user, da):
+        raise HTTPException(status_code=403, detail="Accès refusé")
+    db.add(MessageDA(demande_id=da.id, auteur_id=user.id, texte=texte.strip()))
+    await db.flush()
+    return await _get_da_or_404(db, da_id)

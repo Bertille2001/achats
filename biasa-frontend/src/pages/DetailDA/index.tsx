@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { demandesApi } from '../../api/demandes'
+import { demandesApi, servicesApi } from '../../api/demandes'
 import { useAuthStore } from '../../store/auth'
 import type { DemandeAchat, FichierDA } from '../../types'
 import { STATUT_LABELS, URGENCE_LABELS, MOTIF_LABELS, ACTION_LABELS } from '../../types'
@@ -140,15 +140,39 @@ export default function DetailDAPage() {
   const [commentaire, setCommentaire] = useState('')
   const [loading, setLoading] = useState(true)
   const [al, setAl] = useState(false)
+  const [serviceAutorise, setServiceAutorise] = useState(false)
+  const [messageTexte, setMessageTexte] = useState('')
+  const [envoiMessage, setEnvoiMessage] = useState(false)
+  const [messagesVusAvant, setMessagesVusAvant] = useState(0)
 
   const charger = async () => {
     if (!id) return
     setLoading(true)
-    try { setDa(await demandesApi.detail(Number(id))) }
+    try {
+      const data = await demandesApi.detail(Number(id))
+      setMessagesVusAvant(Number(localStorage.getItem(`messages_vus_${data.id}`) || 0))
+      setDa(data)
+    }
     finally { setLoading(false) }
   }
 
   useEffect(() => { charger() }, [id])
+
+  useEffect(() => {
+    servicesApi.lister().then(services => {
+      const s = services.find(s => s.nom === da?.service_demandeur)
+      setServiceAutorise(!!s?.peut_traiter_soi_meme)
+    }).catch(() => {})
+  }, [da?.service_demandeur])
+
+  // Marque les messages comme vus après quelques secondes (laisse le temps de voir le badge "nouveau")
+  useEffect(() => {
+    if (!da || da.messages.length === 0) return
+    const t = setTimeout(() => {
+      localStorage.setItem(`messages_vus_${da.id}`, String(da.messages.length))
+    }, 2500)
+    return () => clearTimeout(t)
+  }, [da?.id, da?.messages.length])
 
   const act = async (fn: () => Promise<DemandeAchat>) => {
     setAl(true)
@@ -171,6 +195,23 @@ export default function DetailDAPage() {
   const peutValResp = utilisateur?.role === 'responsable'
   const peutValDaf  = utilisateur?.role === 'daf'
   const estAcheteur = utilisateur?.role === 'acheteur' || utilisateur?.role === 'admin'
+  const peutTraiter = estAcheteur || (serviceAutorise && utilisateur?.service === da.service_demandeur)
+
+  const envoyerMessage = async () => {
+    if (!messageTexte.trim()) return
+    setEnvoiMessage(true)
+    try {
+      const updated = await demandesApi.envoyerMessage(da.id, messageTexte.trim())
+      setDa(updated)
+      setMessageTexte('')
+      setMessagesVusAvant(updated.messages.length)
+      localStorage.setItem(`messages_vus_${updated.id}`, String(updated.messages.length))
+    } catch (e: any) {
+      alert(e.response?.data?.detail || 'Erreur lors de l\'envoi du message')
+    } finally {
+      setEnvoiMessage(false)
+    }
+  }
 
   const onglets: { key: typeof onglet; label: string }[] = [
     { key: 'info',       label: 'Informations' },
@@ -245,13 +286,19 @@ export default function DetailDAPage() {
           <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
             <div style={{ display: 'flex', borderBottom: '1px solid var(--border)' }}>
               {onglets.map(o => (
-                <button key={o.key} onClick={() => setOnglet(o.key)} style={{
-                  padding: '9px 14px', fontSize: 13.5, cursor: 'pointer',
-                  background: 'transparent', border: 'none',
-                  borderBottom: onglet === o.key ? '1.5px solid var(--text-primary)' : '1.5px solid transparent',
-                  color: onglet === o.key ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  fontWeight: onglet === o.key ? 500 : 400, marginBottom: -0.5,
-                }}>{o.label}</button>
+                <button
+                  key={o.key}
+                  onClick={() => setOnglet(o.key)}
+                  onMouseEnter={e => { if (onglet !== o.key) e.currentTarget.style.background = 'var(--bg-secondary)' }}
+                  onMouseLeave={e => { if (onglet !== o.key) e.currentTarget.style.background = 'transparent' }}
+                  style={{
+                    padding: '9px 14px', fontSize: 13.5, cursor: 'pointer',
+                    background: 'transparent', border: 'none',
+                    borderBottom: onglet === o.key ? '2px solid #1B9DE0' : '2px solid transparent',
+                    color: onglet === o.key ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    fontWeight: onglet === o.key ? 600 : 400, marginBottom: -1,
+                    transition: 'background 0.12s, color 0.12s',
+                  }}>{o.label}</button>
               ))}
             </div>
 
@@ -443,6 +490,41 @@ export default function DetailDAPage() {
 
               {(da.statut === 'approuvee' || da.statut === 'recue') && (
                 <div style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+                  <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 9, fontWeight: 500 }}>Traitement de la commande</div>
+                  {!peutTraiter && (
+                    <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 10 }}>
+                      Suivi du traitement par le Service Achats{serviceAutorise ? ' (ou par votre service, qui est autorisé à traiter ses propres commandes)' : ''}.
+                    </div>
+                  )}
+                  {[
+                    { label: 'Bon de commande créé', fait: da.bc_cree_le, action: () => act(() => demandesApi.marquerBcCree(da.id)), peut: peutTraiter && !da.bc_cree_le },
+                    { label: 'Commande passée au fournisseur', fait: da.commande_le, action: () => act(() => demandesApi.marquerCommande(da.id)), peut: peutTraiter && !!da.bc_cree_le && !da.commande_le },
+                    { label: 'Livraison reçue', fait: da.livre_le, action: () => act(() => demandesApi.marquerLivre(da.id)), peut: peutTraiter && !!da.commande_le && !da.livre_le },
+                  ].map((etape, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, marginBottom: 7 }}>
+                      <div style={{ width: 20, height: 20, borderRadius: '50%', background: etape.fait ? '#dbeefc' : 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11.5, color: etape.fait ? '#0B3C7A' : 'var(--text-secondary)', flexShrink: 0 }}>
+                        {etape.fait ? '✓' : i + 1}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13.5 }}>{etape.label}</div>
+                        {etape.fait && <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{fmt(etape.fait)}</div>}
+                      </div>
+                      {etape.peut && (
+                        <button
+                          disabled={al}
+                          onClick={etape.action}
+                          style={{ padding: '5px 10px', fontSize: 12.5, border: 'none', borderRadius: 5, background: al ? '#9ab4e8' : '#1B9DE0', color: '#fff', cursor: al ? 'not-allowed' : 'pointer', fontWeight: 500, whiteSpace: 'nowrap' as const }}
+                        >
+                          Cocher
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {(da.statut === 'approuvee' || da.statut === 'recue') && (
+                <div style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
                   <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 9, fontWeight: 500 }}>Confirmation de réception</div>
                   <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 10 }}>
                     La demande passe au statut « Reçue » une fois que <b>le demandeur</b> et <b>le Service Achats</b> ont chacun confirmé avoir bien reçu la commande.
@@ -494,6 +576,57 @@ export default function DetailDAPage() {
           </div>
 
         </div>
+
+        {/* Discussion — visible par tous ceux qui voient cette demande */}
+        <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ padding: '11px 14px', borderBottom: '1px solid var(--border)', fontSize: 13.5, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
+            Discussion
+            {da.messages.length > 0 && (
+              <span style={{ fontSize: 11, color: '#fff', background: '#1B9DE0', borderRadius: 10, padding: '1px 7px', fontWeight: 600 }}>{da.messages.length}</span>
+            )}
+            {da.messages.length > messagesVusAvant && (
+              <span style={{ fontSize: 11, color: '#fff', background: '#c0392b', borderRadius: 10, padding: '1px 7px', fontWeight: 600 }}>
+                {da.messages.length - messagesVusAvant} nouveau{da.messages.length - messagesVusAvant > 1 ? 'x' : ''}
+              </span>
+            )}
+          </div>
+          <div style={{ padding: 14 }}>
+            {da.messages.length === 0 ? (
+              <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginBottom: 12 }}>
+                Aucun message pour l'instant. Tout le monde voyant cette demande verra les messages échangés ici.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14, maxHeight: 360, overflowY: 'auto' as const }}>
+                {da.messages.map(m => (
+                  <div key={m.id} style={{ padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 8, background: m.auteur.id === utilisateur?.id ? '#eaf2fb' : 'var(--bg-secondary)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 3 }}>
+                      <span style={{ fontSize: 12.5, fontWeight: 600, color: '#0B3C7A' }}>{m.auteur.prenom} {m.auteur.nom}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-secondary)', whiteSpace: 'nowrap' as const }}>{fmt(m.date_envoi)}</span>
+                    </div>
+                    <div style={{ fontSize: 13.5, whiteSpace: 'pre-wrap' as const }}>{m.texte}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <textarea
+                value={messageTexte}
+                onChange={e => setMessageTexte(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); envoyerMessage() } }}
+                placeholder="Écrire un message à propos de cette demande…"
+                style={{ flex: 1, fontSize: 13.5, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-secondary)', color: 'var(--text-primary)', resize: 'none', minHeight: 40, boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
+              />
+              <button
+                disabled={envoiMessage || !messageTexte.trim()}
+                onClick={envoyerMessage}
+                style={{ padding: '0 18px', fontSize: 13.5, border: 'none', borderRadius: 6, background: (envoiMessage || !messageTexte.trim()) ? '#9ab4e8' : '#1B9DE0', color: '#fff', cursor: (envoiMessage || !messageTexte.trim()) ? 'not-allowed' : 'pointer', fontWeight: 600 }}
+              >
+                {envoiMessage ? '…' : 'Envoyer'}
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </>
   )

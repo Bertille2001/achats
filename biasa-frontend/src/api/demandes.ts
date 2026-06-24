@@ -1,5 +1,5 @@
 import client from './client'
-import type { DemandeAchat, DemandeAchatForm, FichierDA } from '../types'
+import type { DemandeAchat, DemandeAchatForm, FichierDA, MessageDA, ServiceConfig } from '../types'
 export const demandesApi = {
   mesDemandes: async (): Promise<DemandeAchat[]> => { const { data } = await client.get<DemandeAchat[]>('/demandes/mes-demandes'); return data },
   aValider: async (): Promise<DemandeAchat[]> => { const { data } = await client.get<DemandeAchat[]>('/demandes/a-valider'); return data },
@@ -12,7 +12,17 @@ export const demandesApi = {
   rejeterDaf: async (id: number, commentaire: string): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/rejeter-daf`, { commentaire }); return data },
   confirmerReceptionDemandeur: async (id: number): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/confirmer-reception-demandeur`); return data },
   confirmerReceptionAcheteur: async (id: number): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/confirmer-reception-acheteur`); return data },
+  marquerBcCree: async (id: number): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/marquer-bc-cree`); return data },
+  marquerCommande: async (id: number): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/marquer-commande`); return data },
+  marquerLivre: async (id: number): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/marquer-livre`); return data },
+  listerMessages: async (id: number): Promise<MessageDA[]> => { const { data } = await client.get<MessageDA[]>(`/demandes/${id}/messages`); return data },
+  envoyerMessage: async (id: number, texte: string): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/messages`, { texte }); return data },
   uploadFichier: async (id: number, file: File): Promise<FichierDA> => { const form = new FormData(); form.append('file', file); const { data } = await client.post<FichierDA>(`/demandes/${id}/fichiers`, form, { headers: { 'Content-Type': 'multipart/form-data' } }); return data },
   urlTelechargement: (daId: number, fichierId: number): string => `/api/v1/demandes/${daId}/fichiers/${fichierId}/telecharger`,
   urlApercu: (daId: number, fichierId: number): string => `/api/v1/demandes/${daId}/fichiers/${fichierId}/apercu`,
+}
+
+export const servicesApi = {
+  lister: async (): Promise<ServiceConfig[]> => { const { data } = await client.get<ServiceConfig[]>('/admin/services'); return data },
+  modifier: async (nom: string, peut_traiter_soi_meme: boolean): Promise<ServiceConfig> => { const { data } = await client.put<ServiceConfig>(`/admin/services/${encodeURIComponent(nom)}`, { peut_traiter_soi_meme }); return data },
 }

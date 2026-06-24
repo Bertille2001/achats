@@ -15,6 +15,7 @@ import ChangerMotDePassePage from './pages/ChangerMotDePasse'
 import MotDePasseOubliePage from './pages/MotDePasseOublie'
 import ReinitialiserMotDePassePage from './pages/ReinitialiserMotDePasse'
 import JournalAuditPage from './pages/JournalAudit'
+import ServicesPage from './pages/Services'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
       { path: '/admin/toutes-da', element: <ToutesDaPage /> },
       { path: '/config-email', element: <ConfigEmailPage /> },
       { path: '/journal-audit', element: <JournalAuditPage /> },
+      { path: '/services', element: <ServicesPage /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

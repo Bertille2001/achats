@@ -100,6 +100,29 @@ class HistoriqueOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ServiceOut(BaseModel):
+    id: int
+    nom: str
+    peut_traiter_soi_meme: bool
+    model_config = {"from_attributes": True}
+
+
+class ServiceUpdate(BaseModel):
+    peut_traiter_soi_meme: bool
+
+
+class MessageDACreate(BaseModel):
+    texte: str = Field(min_length=1, max_length=2000)
+
+
+class MessageDAOut(BaseModel):
+    id: int
+    texte: str
+    date_envoi: datetime
+    auteur: UtilisateurOut
+    model_config = {"from_attributes": True}
+
+
 class DemandeAchatCreate(BaseModel):
     service_demandeur: str
     poste_fonction: Optional[str] = None
@@ -151,10 +174,14 @@ class DemandeAchatOut(BaseModel):
     mise_a_jour_le: datetime
     confirmation_demandeur_le: Optional[datetime] = None
     confirmation_acheteur_le: Optional[datetime] = None
+    bc_cree_le: Optional[datetime] = None
+    commande_le: Optional[datetime] = None
+    livre_le: Optional[datetime] = None
     demandeur: UtilisateurOut
     lignes: list[LigneDAOut] = []
     fichiers: list[FichierDAOut] = []
     historique: list[HistoriqueOut] = []
+    messages: list[MessageDAOut] = []
     model_config = {"from_attributes": True}
 
 

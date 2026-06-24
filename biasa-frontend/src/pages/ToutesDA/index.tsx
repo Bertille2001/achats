@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import BadgeMessages from '../../components/BadgeMessages'
 import { useNavigate } from 'react-router-dom'
 import client from '../../api/client'
 import type { DemandeAchat } from '../../types'
@@ -113,7 +114,7 @@ export default function ToutesDaPage() {
                 <tbody>
                   {filtrees.map(da => (
                     <tr key={da.id} onClick={() => navigate(`/demandes/${da.id}`)} style={{ cursor: 'pointer' }}>
-                      <td style={{ ...tdS, fontWeight: 500 }}>{da.numero}</td>
+                      <td style={{ ...tdS, fontWeight: 500 }}>{da.numero}<BadgeMessages da={da} /></td>
                       <td style={tdS}>{fmtD(da.date_demande)}</td>
                       <td style={tdS}>{da.demandeur.prenom} {da.demandeur.nom}</td>
                       <td style={tdS}>{da.service_demandeur}</td>

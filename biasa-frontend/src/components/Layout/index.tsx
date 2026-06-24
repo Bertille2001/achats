@@ -151,6 +151,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               <NavItem to="/parametres" label="Paramètres" dot={dot} />
               <NavItem to="/config-email" label="Config. email" dot={dot} />
               <NavItem to="/journal-audit" label="Journal d'audit" dot={dot} />
+              <NavItem to="/services" label="Services" dot={dot} />
             </>
           )}
         </nav>

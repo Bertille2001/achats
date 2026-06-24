@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import BadgeMessages from '../../components/BadgeMessages'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { demandesApi } from '../../api/demandes'
 import { useAuthStore } from '../../store/auth'
@@ -142,7 +143,7 @@ export default function AValiderPage() {
                           <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#1B9DE0' }} />
                         )}
                       </td>
-                      <td style={{ ...tdS, fontWeight: nonVue ? 600 : 500 }}>{da.numero}</td>
+                      <td style={{ ...tdS, fontWeight: nonVue ? 600 : 500 }}>{da.numero}<BadgeMessages da={da} /></td>
                       <td style={tdS}>{fmtD(da.date_demande)}</td>
                       <td style={{ ...tdS, fontWeight: nonVue ? 500 : 400 }}>{da.demandeur.prenom} {da.demandeur.nom}</td>
                       <td style={tdS}>{da.service_demandeur}</td>

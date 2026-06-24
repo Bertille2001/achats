@@ -57,6 +57,9 @@ class ActionHistorique(str, enum.Enum):
     TRAITEMENT_ACHETEUR = "traitement_acheteur"
     CONFIRMATION_RECEPTION_DEMANDEUR = "confirmation_reception_demandeur"
     CONFIRMATION_RECEPTION_ACHETEUR = "confirmation_reception_acheteur"
+    BC_CREE = "bc_cree"
+    COMMANDE_PASSEE = "commande_passee"
+    LIVRAISON_RECUE = "livraison_recue"
 
 
 class Utilisateur(Base):
@@ -118,10 +121,21 @@ class DemandeAchat(Base):
     confirmation_acheteur_par_id: Mapped[int | None] = mapped_column(ForeignKey("utilisateurs.id"), nullable=True)
     confirmation_acheteur_le: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
+    # Sous-étapes de traitement par le Service Achats (ou le service lui-même
+    # s'il est autorisé à traiter ses propres commandes — voir Service.peut_traiter_soi_meme).
+    # Se déroulent pendant que statut == APPROUVEE, avant les confirmations ci-dessus.
+    bc_cree_par_id: Mapped[int | None] = mapped_column(ForeignKey("utilisateurs.id"), nullable=True)
+    bc_cree_le: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    commande_par_id: Mapped[int | None] = mapped_column(ForeignKey("utilisateurs.id"), nullable=True)
+    commande_le: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    livre_par_id: Mapped[int | None] = mapped_column(ForeignKey("utilisateurs.id"), nullable=True)
+    livre_le: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
     demandeur: Mapped["Utilisateur"] = relationship(back_populates="demandes", foreign_keys=[demandeur_id])
     lignes: Mapped[list["LigneDA"]] = relationship(back_populates="demande", cascade="all, delete-orphan", order_by="LigneDA.numero_ligne")
     fichiers: Mapped[list["FichierDA"]] = relationship(back_populates="demande", cascade="all, delete-orphan")
     historique: Mapped[list["HistoriqueValidation"]] = relationship(back_populates="demande", cascade="all, delete-orphan", order_by="HistoriqueValidation.date_action")
+    messages: Mapped[list["MessageDA"]] = relationship(back_populates="demande", cascade="all, delete-orphan", order_by="MessageDA.date_envoi")
 
 
 class LigneDA(Base):
@@ -190,3 +204,31 @@ class JournalAudit(Base):
     date_evenement: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     utilisateur: Mapped["Utilisateur | None"] = relationship()
+
+
+class Service(Base):
+    """Référentiel des services, géré depuis Administration. Le champ
+    peut_traiter_soi_meme permet à un service (ex. Pharmacie) de traiter
+    lui-même ses commandes (BC/Commandé/Livré) sans passer par le Service
+    Achats — n'importe quel utilisateur de ce service peut alors agir,
+    quel que soit son rôle de compte (pas besoin de comptes multi-rôles)."""
+    __tablename__ = "services"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    nom: Mapped[str] = mapped_column(String(100), unique=True, index=True)
+    peut_traiter_soi_meme: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class MessageDA(Base):
+    """Message de discussion sur une demande d'achat — visible par toute
+    personne pouvant voir la demande (demandeur, responsable, DAF, achats, admin)."""
+    __tablename__ = "messages_da"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    demande_id: Mapped[int] = mapped_column(ForeignKey("demandes_achat.id", ondelete="CASCADE"))
+    auteur_id: Mapped[int] = mapped_column(ForeignKey("utilisateurs.id"))
+    texte: Mapped[str] = mapped_column(Text)
+    date_envoi: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    demande: Mapped["DemandeAchat"] = relationship(back_populates="messages")
+    auteur: Mapped["Utilisateur"] = relationship()

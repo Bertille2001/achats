@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, exists
 from app.db.session import get_db
 from app.core.security import get_current_user
-from app.schemas.schemas import DemandeAchatCreate, DemandeAchatOut, ValidationRequest, RejetRequest, FichierDAOut
+from app.schemas.schemas import DemandeAchatCreate, DemandeAchatOut, ValidationRequest, RejetRequest, FichierDAOut, MessageDACreate, MessageDAOut
 from app.services import da_service
 from app.models.models import RoleUtilisateur, DemandeAchat, FichierDA, HistoriqueValidation, ActionHistorique
 from app.core.config import UPLOAD_PATH
@@ -156,6 +156,31 @@ async def confirmer_reception_demandeur(da_id: int, db: AsyncSession = Depends(g
 @router.post("/{da_id}/confirmer-reception-acheteur", response_model=DemandeAchatOut)
 async def confirmer_reception_acheteur(da_id: int, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
     return await da_service.confirmer_reception_acheteur(db, da_id, current_user)
+
+
+@router.post("/{da_id}/marquer-bc-cree", response_model=DemandeAchatOut)
+async def marquer_bc_cree(da_id: int, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+    return await da_service.marquer_bc_cree(db, da_id, current_user)
+
+
+@router.post("/{da_id}/marquer-commande", response_model=DemandeAchatOut)
+async def marquer_commande(da_id: int, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+    return await da_service.marquer_commande(db, da_id, current_user)
+
+
+@router.post("/{da_id}/marquer-livre", response_model=DemandeAchatOut)
+async def marquer_livre(da_id: int, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+    return await da_service.marquer_livre(db, da_id, current_user)
+
+
+@router.get("/{da_id}/messages", response_model=list[MessageDAOut])
+async def lister_messages(da_id: int, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+    return await da_service.lister_messages(db, da_id, current_user)
+
+
+@router.post("/{da_id}/messages", response_model=DemandeAchatOut, status_code=201)
+async def envoyer_message(da_id: int, body: MessageDACreate, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+    return await da_service.envoyer_message(db, da_id, current_user, body.texte)
 
 
 @router.post("/{da_id}/fichiers", response_model=FichierDAOut, status_code=201)

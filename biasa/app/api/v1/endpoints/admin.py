@@ -7,7 +7,7 @@ from app.core.security import get_current_user
 from app.models.models import (
     Utilisateur, DemandeAchat, StatutDA, RoleUtilisateur
 )
-from app.schemas.schemas import DemandeAchatOut
+from app.schemas.schemas import DemandeAchatOut, ServiceOut, ServiceUpdate
 from app.services import da_service
 
 router = APIRouter(prefix="/admin", tags=["Administration"])
@@ -185,3 +185,44 @@ async def tester_email(data: TestEmail, _=Depends(admin_only)):
         return {"message": f"Email envoyé à {data.email}"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erreur : {str(e)}")
+
+
+# ---------- Services (réglage "peut traiter ses propres commandes") ----------
+
+@router.get("/services", response_model=list[ServiceOut])
+async def lister_services(db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+    """Liste tous les services connus : ceux déjà configurés en base, plus tous
+    les noms de service déjà utilisés par des utilisateurs ou des demandes
+    (pour ne rien laisser de côté même si l'admin n'a encore rien réglé)."""
+    from app.models.models import Service as ServiceModel
+
+    result = await db.execute(select(ServiceModel).order_by(ServiceModel.nom))
+    existants = {s.nom: s for s in result.scalars().all()}
+
+    r1 = await db.execute(select(Utilisateur.service).where(Utilisateur.service.isnot(None)).distinct())
+    r2 = await db.execute(select(DemandeAchat.service_demandeur).distinct())
+    tous_les_noms = {v for v in r1.scalars().all() if v} | {v for v in r2.scalars().all() if v} | set(existants.keys())
+
+    services = []
+    for nom in sorted(tous_les_noms):
+        if nom in existants:
+            services.append(existants[nom])
+        else:
+            services.append(ServiceModel(id=0, nom=nom, peut_traiter_soi_meme=False))
+    return services
+
+
+@router.put("/services/{nom}", response_model=ServiceOut)
+async def modifier_service(nom: str, data: ServiceUpdate, db: AsyncSession = Depends(get_db), _=Depends(admin_only)):
+    from app.models.models import Service as ServiceModel
+
+    result = await db.execute(select(ServiceModel).where(ServiceModel.nom == nom))
+    service = result.scalar_one_or_none()
+    if not service:
+        service = ServiceModel(nom=nom, peut_traiter_soi_meme=data.peut_traiter_soi_meme)
+        db.add(service)
+    else:
+        service.peut_traiter_soi_meme = data.peut_traiter_soi_meme
+    await db.flush()
+    await db.refresh(service)
+    return service
