@@ -1,0 +1,26 @@
+# Python
+biasa/venv/
+biasa/__pycache__/
+biasa/**/__pycache__/
+biasa/*.pyc
+biasa/.env
+biasa/.env.example
+dist/
+
+# Node
+biasa-frontend/node_modules/
+biasa-frontend/dist/
+
+# Uploads
+biasa/uploads/
+# Dans le fichier .gitignore du projet
+
+
+# Général
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+Thumbs.db
+*.log

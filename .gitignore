@@ -1,0 +1,9 @@
+biasa/.env
+biasa/venv/
+biasa/__pycache__/
+biasa/**/__pycache__/
+biasa/uploads/
+biasa/*.db
+biasa-frontend/node_modules/
+biasa-frontend/dist/
+.DS_Store
