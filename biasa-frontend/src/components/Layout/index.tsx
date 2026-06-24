@@ -110,7 +110,12 @@ export default function Layout({ children }: { children: ReactNode }) {
           position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 95,
           transform: menuMobileOuvert ? 'translateX(0)' : 'translateX(-100%)',
           transition: 'transform 0.2s ease',
-        } : {}),
+        } : {
+          // Reste collée au viewport même si le contenu principal est très long
+          // (beaucoup de messages, beaucoup d'étapes…) — sans ça, le profil et le
+          // bouton déconnexion finissent au bas d'une colonne qui s'étire avec le contenu.
+          position: 'sticky', top: 0, height: '100vh', flexShrink: 0,
+        }),
       }}>
 
         {/* Logo */}
@@ -126,7 +131,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Nav */}
-        <nav style={{ padding: '8px', flex: 1 }}>
+        <nav style={{ padding: '8px', flex: 1, overflowY: 'auto' as const, minHeight: 0 }}>
           <NavItem to="/" label="Tableau de bord" dot={dot} exact />
           <NavItem to="/mes-demandes" label="Mes demandes" dot={dot} />
 

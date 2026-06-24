@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { demandesApi, servicesApi } from '../../api/demandes'
 import { useAuthStore } from '../../store/auth'
@@ -144,10 +144,13 @@ export default function DetailDAPage() {
   const [messageTexte, setMessageTexte] = useState('')
   const [envoiMessage, setEnvoiMessage] = useState(false)
   const [messagesVusAvant, setMessagesVusAvant] = useState(0)
+  const [nbMessagesAffiches, setNbMessagesAffiches] = useState(15)
+  const discussionRef = useRef<HTMLDivElement>(null)
 
   const charger = async () => {
     if (!id) return
     setLoading(true)
+    setNbMessagesAffiches(15)
     try {
       const data = await demandesApi.detail(Number(id))
       setMessagesVusAvant(Number(localStorage.getItem(`messages_vus_${data.id}`) || 0))
@@ -260,6 +263,20 @@ export default function DetailDAPage() {
               <span style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor(da.statut) }} />
               {STATUT_LABELS[da.statut]}
             </Tag>
+            <span
+              onClick={() => discussionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              style={{
+                fontSize: 11.5, padding: '2px 9px', borderRadius: 5, cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                border: '1px solid var(--border)',
+                background: da.messages.length > messagesVusAvant ? '#fcebeb' : 'transparent',
+                color: da.messages.length > messagesVusAvant ? '#a32d2d' : 'var(--text-secondary)',
+                fontWeight: da.messages.length > messagesVusAvant ? 600 : 400,
+              }}
+            >
+              Discussion {da.messages.length > 0 ? `(${da.messages.length})` : ''}
+              {da.messages.length > messagesVusAvant && ` · ${da.messages.length - messagesVusAvant} nouveau${da.messages.length - messagesVusAvant > 1 ? 'x' : ''}`}
+            </span>
           </div>
         </div>
 
@@ -418,19 +435,26 @@ export default function DetailDAPage() {
           <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
             <div style={{ padding: '11px 14px', borderBottom: '1px solid var(--border)', fontSize: 13.5, fontWeight: 500 }}>Validation</div>
             <div style={{ padding: 14 }}>
-              {[
-                { label: 'Soumission',  done: !!da.soumise_le },
-                { label: 'Responsable', done: ['att_daf','approuvee','rejetee','recue'].includes(da.statut) && da.statut !== 'att_responsable' },
-                { label: 'DAF',         done: da.statut === 'approuvee' || da.statut === 'recue' },
-                { label: 'Réception',  done: da.statut === 'recue' },
-              ].map((s, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, marginBottom: 7 }}>
-                  <div style={{ width: 20, height: 20, borderRadius: '50%', background: s.done ? '#eaf3de' : 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11.5, color: s.done ? '#27500a' : 'var(--text-secondary)' }}>
-                    {s.done ? '✓' : i + 1}
+              <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 16 }}>
+                {[
+                  { label: 'Soumission',  done: !!da.soumise_le },
+                  { label: 'Responsable', done: ['att_daf','approuvee','rejetee','recue'].includes(da.statut) && da.statut !== 'att_responsable' },
+                  { label: 'DAF',         done: da.statut === 'approuvee' || da.statut === 'recue' },
+                  { label: 'Réception',  done: da.statut === 'recue' },
+                ].map((s, i, arr) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', flex: i < arr.length - 1 ? 1 : undefined }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 24 }}>
+                      <div style={{ width: 20, height: 20, borderRadius: '50%', background: s.done ? '#0B3C7A' : 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10.5, color: s.done ? '#fff' : 'var(--text-secondary)', flexShrink: 0 }}>
+                        {s.done ? '✓' : i + 1}
+                      </div>
+                      <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 4, textAlign: 'center' as const, lineHeight: 1.2 }}>{s.label}</div>
+                    </div>
+                    {i < arr.length - 1 && (
+                      <div style={{ height: 1, background: s.done ? '#0B3C7A' : 'var(--border)', flex: 1, marginTop: 10 }} />
+                    )}
                   </div>
-                  <div style={{ fontSize: 13.5 }}>{s.label}</div>
-                </div>
-              ))}
+                ))}
+              </div>
 
               {peutValResp && da.statut === 'att_responsable' && (
                 <div style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
@@ -489,37 +513,34 @@ export default function DetailDAPage() {
               )}
 
               {(da.statut === 'approuvee' || da.statut === 'recue') && (
-                <div style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
-                  <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 9, fontWeight: 500 }}>Traitement de la commande</div>
-                  {!peutTraiter && (
-                    <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 10 }}>
-                      Suivi du traitement par le Service Achats{serviceAutorise ? ' (ou par votre service, qui est autorisé à traiter ses propres commandes)' : ''}.
-                    </div>
-                  )}
+                <div style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+                  <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 500 }}>Traitement de la commande</div>
                   {[
                     { label: 'Bon de commande créé', fait: da.bc_cree_le, action: () => act(() => demandesApi.marquerBcCree(da.id)), peut: peutTraiter && !da.bc_cree_le },
                     { label: 'Commande passée au fournisseur', fait: da.commande_le, action: () => act(() => demandesApi.marquerCommande(da.id)), peut: peutTraiter && !!da.bc_cree_le && !da.commande_le },
                     { label: 'Livraison reçue', fait: da.livre_le, action: () => act(() => demandesApi.marquerLivre(da.id)), peut: peutTraiter && !!da.commande_le && !da.livre_le },
-                  ].map((etape, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, marginBottom: 7 }}>
-                      <div style={{ width: 20, height: 20, borderRadius: '50%', background: etape.fait ? '#dbeefc' : 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11.5, color: etape.fait ? '#0B3C7A' : 'var(--text-secondary)', flexShrink: 0 }}>
+                  ].map((etape, i, arr) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                      <div style={{ width: 16, height: 16, borderRadius: '50%', background: etape.fait ? '#0B3C7A' : 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9.5, color: etape.fait ? '#fff' : 'var(--text-secondary)', flexShrink: 0 }}>
                         {etape.fait ? '✓' : i + 1}
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13.5 }}>{etape.label}</div>
-                        {etape.fait && <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{fmt(etape.fait)}</div>}
-                      </div>
+                      <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: etape.fait ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{etape.label}</div>
                       {etape.peut && (
                         <button
                           disabled={al}
                           onClick={etape.action}
-                          style={{ padding: '5px 10px', fontSize: 12.5, border: 'none', borderRadius: 5, background: al ? '#9ab4e8' : '#1B9DE0', color: '#fff', cursor: al ? 'not-allowed' : 'pointer', fontWeight: 500, whiteSpace: 'nowrap' as const }}
+                          style={{ padding: '3px 9px', fontSize: 11.5, border: 'none', borderRadius: 5, background: al ? '#9ab4e8' : '#1B9DE0', color: '#fff', cursor: al ? 'not-allowed' : 'pointer', fontWeight: 500, whiteSpace: 'nowrap' as const, flexShrink: 0 }}
                         >
                           Cocher
                         </button>
                       )}
                     </div>
                   ))}
+                  {!peutTraiter && (
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>
+                      Traité par le Service Achats{serviceAutorise ? ' ou votre service (autorisé)' : ''}.
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -578,7 +599,7 @@ export default function DetailDAPage() {
         </div>
 
         {/* Discussion — visible par tous ceux qui voient cette demande */}
-        <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+        <div ref={discussionRef} style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
           <div style={{ padding: '11px 14px', borderBottom: '1px solid var(--border)', fontSize: 13.5, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
             Discussion
             {da.messages.length > 0 && (
@@ -597,7 +618,15 @@ export default function DetailDAPage() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14, maxHeight: 360, overflowY: 'auto' as const }}>
-                {da.messages.map(m => (
+                {da.messages.length > nbMessagesAffiches && (
+                  <button
+                    onClick={() => setNbMessagesAffiches(n => n + 15)}
+                    style={{ alignSelf: 'center', padding: '6px 14px', fontSize: 12.5, border: '1px solid var(--border)', borderRadius: 20, background: 'var(--bg-secondary)', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                  >
+                    Voir les {Math.min(15, da.messages.length - nbMessagesAffiches)} messages précédents
+                  </button>
+                )}
+                {da.messages.slice(-nbMessagesAffiches).map(m => (
                   <div key={m.id} style={{ padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 8, background: m.auteur.id === utilisateur?.id ? '#eaf2fb' : 'var(--bg-secondary)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 3 }}>
                       <span style={{ fontSize: 12.5, fontWeight: 600, color: '#0B3C7A' }}>{m.auteur.prenom} {m.auteur.nom}</span>
