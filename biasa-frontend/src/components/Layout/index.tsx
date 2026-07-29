@@ -2,6 +2,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth'
 import { useEffect, useState, useCallback, type ReactNode } from 'react'
 import { demandesApi } from '../../api/demandes'
+import { etatNotifications, activerNotifications, desactiverNotifications, type EtatNotifications } from '../../notifications'
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { utilisateur, logout } = useAuthStore()
@@ -12,7 +13,30 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [largeurFenetre, setLargeurFenetre] = useState(window.innerWidth)
   const [menuMobileOuvert, setMenuMobileOuvert] = useState(false)
+  const [etatNotifs, setEtatNotifs] = useState<EtatNotifications>('inactives')
+  const [chargementNotifs, setChargementNotifs] = useState(false)
   const estMobile = largeurFenetre < 860
+
+  useEffect(() => { etatNotifications().then(setEtatNotifs) }, [])
+
+  const basculerNotifications = async () => {
+    setChargementNotifs(true)
+    try {
+      if (etatNotifs === 'actives') {
+        await desactiverNotifications()
+        setEtatNotifs('inactives')
+      } else {
+        const resultat = await activerNotifications()
+        setEtatNotifs(resultat)
+        if (resultat === 'refusees') alert("Les notifications ont été bloquées dans les réglages du navigateur. Autorise-les pour ce site pour les activer.")
+        if (resultat === 'indisponibles') alert("Les notifications ne sont pas disponibles sur ce navigateur (ou le serveur n'a pas encore été configuré pour les envoyer).")
+      }
+    } catch {
+      alert("Erreur lors de l'activation des notifications.")
+    } finally {
+      setChargementNotifs(false)
+    }
+  }
 
   useEffect(() => {
     const onResize = () => setLargeurFenetre(window.innerWidth)
@@ -198,11 +222,16 @@ export default function Layout({ children }: { children: ReactNode }) {
 
           {estValidateur && <NavItem to="/historique-validations" label="Historique" dot={dot} />}
 
+          {(estValidateur || (estAcheteur && !estAdmin)) && (
+            <NavItem to="/equipements" label="Équipements" dot={dot} />
+          )}
+
           {estAdmin && (
             <>
               <div style={{ fontSize: 10.5, color: '#c4c4be', padding: '12px 10px 4px', letterSpacing: '0.8px', textTransform: 'uppercase' as const }}>Administration</div>
               <NavItem to="/admin" label="Tableau de bord" dot={dot} />
               <NavItem to="/admin/toutes-da" label="Toutes les DA" dot={dot} />
+              <NavItem to="/equipements" label="Équipements" dot={dot} />
               <NavItem to="/gestion-users" label="Utilisateurs" dot={dot} />
               <NavItem to="/parametres" label="Paramètres" dot={dot} />
               <NavItem to="/config-email" label="Config. email" dot={dot} />
@@ -227,6 +256,22 @@ export default function Layout({ children }: { children: ReactNode }) {
               <div style={{ fontSize: 11.5, color: 'var(--text-muted)', textTransform: 'capitalize' as const }}>{utilisateur?.role}</div>
             </div>
           </div>
+          {etatNotifs !== 'indisponibles' && (
+            <button
+              onClick={basculerNotifications}
+              disabled={chargementNotifs}
+              title={etatNotifs === 'actives' ? 'Désactiver les notifications de message sur ce poste' : 'Activer les notifications de message sur ce poste'}
+              style={{
+                width: '100%', padding: '5px 8px', fontSize: 12, fontWeight: 500, marginBottom: 6,
+                border: '1px solid var(--border)', borderRadius: 6,
+                background: etatNotifs === 'actives' ? '#eaf6ee' : 'transparent',
+                color: etatNotifs === 'actives' ? '#1e8f5f' : 'var(--text-secondary)',
+                cursor: chargementNotifs ? 'wait' : 'pointer',
+              }}
+            >
+              {chargementNotifs ? '…' : etatNotifs === 'actives' ? '🔔 Notifications activées' : '🔕 Activer les notifications'}
+            </button>
+          )}
           <button onClick={() => setConfirmLogout(true)} style={{ width: '100%', padding: '5px 8px', fontSize: 12.5, fontWeight: 600, border: '1px solid #f0b8b3', borderRadius: 6, background: '#fcebeb', cursor: 'pointer', color: '#a32d2d' }}>
             Déconnexion
           </button>

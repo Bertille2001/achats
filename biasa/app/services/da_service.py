@@ -10,7 +10,7 @@ import aiofiles
 
 from app.models.models import (
     DemandeAchat, LigneDA, FichierDA, HistoriqueValidation,
-    StatutDA, ActionHistorique, RoleUtilisateur, Utilisateur, Service, MessageDA
+    StatutDA, ActionHistorique, RoleUtilisateur, Utilisateur, Service, MessageDA, LigneCommande
 )
 from app.schemas.schemas import DemandeAchatCreate
 from app.core.config import UPLOAD_PATH
@@ -33,6 +33,7 @@ def _load_options():
         selectinload(DemandeAchat.fichiers),
         selectinload(DemandeAchat.historique).selectinload(HistoriqueValidation.utilisateur),
         selectinload(DemandeAchat.messages).selectinload(MessageDA.auteur),
+        selectinload(DemandeAchat.lignes_commande),
     ]
 
 
@@ -397,16 +398,27 @@ async def marquer_bc_cree(db: AsyncSession, da_id: int, user: Utilisateur) -> De
     return await _get_da_or_404(db, da_id)
 
 
-async def marquer_commande(db: AsyncSession, da_id: int, user: Utilisateur) -> DemandeAchat:
+async def marquer_commande(db: AsyncSession, da_id: int, user: Utilisateur, lignes: list) -> DemandeAchat:
+    """`lignes` = ce qui est réellement commandé (désignation/quantité/prix
+    unitaire), saisi par le service Achats. Peut différer des lignes
+    initialement demandées (ex : 1 PC demandé, 2 commandés car il en manquait
+    aussi ailleurs) — c'est cette liste qui sert de base au montant dépensé."""
     da = await _get_da_or_404(db, da_id)
     await _verifier_traitement(db, da, user)
     if da.bc_cree_le is None:
         raise HTTPException(status_code=400, detail="Le bon de commande doit être créé avant de marquer la commande comme passée.")
     if da.commande_le is not None:
         raise HTTPException(status_code=400, detail="La commande a déjà été marquée comme passée.")
+    if not lignes:
+        raise HTTPException(status_code=400, detail="Indiquez au moins une ligne réellement commandée, avec son prix.")
+    for l in lignes:
+        db.add(LigneCommande(demande_id=da.id, designation=l.designation, quantite=l.quantite, prix_unitaire=l.prix_unitaire))
     da.commande_par_id = user.id
     da.commande_le = datetime.utcnow()
-    _ajouter_historique(db, da.id, user.id, ActionHistorique.COMMANDE_PASSEE)
+    _ajouter_historique(
+        db, da.id, user.id, ActionHistorique.COMMANDE_PASSEE,
+        f"Montant commandé : {sum(l.quantite * l.prix_unitaire for l in lignes):.2f}",
+    )
     await db.flush()
     return await _get_da_or_404(db, da_id)
 
@@ -440,12 +452,43 @@ async def lister_messages(db: AsyncSession, da_id: int, user: Utilisateur) -> li
     return da.messages
 
 
+async def _destinataires_notification(db: AsyncSession, da: DemandeAchat, exclure_id: int) -> list[int]:
+    """Tout le monde pouvant voir cette DA (même règle que peut_voir_da),
+    sauf l'auteur du message : le demandeur d'origine, plus responsable/DAF/
+    achats/admin qui ont tous une vision globale."""
+    result = await db.execute(
+        select(Utilisateur.id).where(
+            Utilisateur.actif == True,
+            Utilisateur.id != exclure_id,
+            (Utilisateur.role != RoleUtilisateur.DEMANDEUR) | (Utilisateur.id == da.demandeur_id),
+        )
+    )
+    return [r for r in result.scalars().all()]
+
+
 async def envoyer_message(db: AsyncSession, da_id: int, user: Utilisateur, texte: str) -> DemandeAchat:
     da = await _get_da_or_404(db, da_id)
     if not peut_voir_da(user, da):
         raise HTTPException(status_code=403, detail="Accès refusé")
-    db.add(MessageDA(demande_id=da.id, auteur_id=user.id, texte=texte.strip()))
+    texte = texte.strip()
+    db.add(MessageDA(demande_id=da.id, auteur_id=user.id, texte=texte))
     await db.flush()
+
+    # Notification push (best-effort, ne doit jamais faire échouer l'envoi
+    # du message si les clés VAPID ne sont pas configurées ou si un envoi
+    # échoue pour un abonnement en particulier).
+    try:
+        from app.services.push_service import notifier_nouveau_message
+        destinataires = await _destinataires_notification(db, da, user.id)
+        await notifier_nouveau_message(
+            db, destinataires,
+            titre=f"Nouveau message — {da.numero}",
+            corps=f"{user.prenom} {user.nom} : {texte[:100]}",
+            url=f"/demandes/{da.id}?discussion=1",
+        )
+    except Exception:
+        pass
+
     return await _get_da_or_404(db, da_id)
 
 

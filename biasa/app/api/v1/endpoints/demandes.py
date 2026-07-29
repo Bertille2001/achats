@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, exists
 from app.db.session import get_db
 from app.core.security import get_current_user
-from app.schemas.schemas import DemandeAchatCreate, DemandeAchatOut, ValidationRequest, RejetRequest, FichierDAOut, MessageDACreate, MessageDAOut, DemandeAchatUpdate
+from app.schemas.schemas import DemandeAchatCreate, DemandeAchatOut, ValidationRequest, RejetRequest, FichierDAOut, MessageDACreate, MessageDAOut, DemandeAchatUpdate, MarquerCommandeRequest
 from app.services import da_service
 from app.models.models import RoleUtilisateur, DemandeAchat, FichierDA, HistoriqueValidation, ActionHistorique
 from app.core.config import UPLOAD_PATH
@@ -171,8 +171,8 @@ async def marquer_bc_cree(da_id: int, db: AsyncSession = Depends(get_db), curren
 
 
 @router.post("/{da_id}/marquer-commande", response_model=DemandeAchatOut)
-async def marquer_commande(da_id: int, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
-    return await da_service.marquer_commande(db, da_id, current_user)
+async def marquer_commande(da_id: int, body: MarquerCommandeRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+    return await da_service.marquer_commande(db, da_id, current_user, body.lignes)
 
 
 @router.post("/{da_id}/marquer-livre", response_model=DemandeAchatOut)

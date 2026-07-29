@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
-from app.models.models import TypeDA, NatureDA, MotifDA, UrgenceDA, StatutDA, RoleUtilisateur, ActionHistorique
+from app.models.models import TypeDA, NatureDA, MotifDA, UrgenceDA, StatutDA, RoleUtilisateur, ActionHistorique, EtatEquipement
 
 
 class UtilisateurCreate(BaseModel):
@@ -123,6 +123,65 @@ class MessageDAOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class LigneCommandeIn(BaseModel):
+    designation: str = Field(min_length=1, max_length=300)
+    quantite: int = Field(gt=0)
+    prix_unitaire: float = Field(ge=0)
+
+
+class LigneCommandeOut(LigneCommandeIn):
+    id: int
+    model_config = {"from_attributes": True}
+
+
+class MarquerCommandeRequest(BaseModel):
+    """Lignes réellement commandées (peuvent différer des lignes demandées) —
+    saisies par le service Achats au moment de passer la commande."""
+    lignes: list[LigneCommandeIn] = Field(min_length=1)
+
+
+class EquipementCreate(BaseModel):
+    demande_id: Optional[int] = None
+    designation: str = Field(min_length=1, max_length=300)
+    reference: Optional[str] = None
+    lieu_deploiement: Optional[str] = None
+    responsable: Optional[str] = None
+    etat: EtatEquipement = EtatEquipement.EN_SERVICE
+    garantie_fin: Optional[str] = None
+    prix_unitaire: Optional[float] = None
+
+
+class EquipementUpdate(BaseModel):
+    designation: Optional[str] = None
+    reference: Optional[str] = None
+    lieu_deploiement: Optional[str] = None
+    responsable: Optional[str] = None
+    etat: Optional[EtatEquipement] = None
+    garantie_fin: Optional[str] = None
+    prix_unitaire: Optional[float] = None
+
+
+class EquipementOut(BaseModel):
+    id: int
+    demande_id: Optional[int]
+    designation: str
+    reference: Optional[str]
+    lieu_deploiement: Optional[str]
+    responsable: Optional[str]
+    etat: EtatEquipement
+    garantie_fin: Optional[str]
+    prix_unitaire: Optional[float]
+    cree_le: datetime
+    ajoute_par: UtilisateurOut
+    model_config = {"from_attributes": True}
+
+
+class AbonnementNotificationCreate(BaseModel):
+    endpoint: str
+    p256dh: str
+    auth: str
+
+
 class DemandeAchatCreate(BaseModel):
     service_demandeur: str
     poste_fonction: Optional[str] = None
@@ -183,6 +242,8 @@ class DemandeAchatOut(BaseModel):
     fichiers: list[FichierDAOut] = []
     historique: list[HistoriqueOut] = []
     messages: list[MessageDAOut] = []
+    lignes_commande: list[LigneCommandeOut] = []
+    montant_total_commande: float = 0
     model_config = {"from_attributes": True}
 
 

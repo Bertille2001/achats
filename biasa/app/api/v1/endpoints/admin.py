@@ -66,6 +66,40 @@ async def toutes_les_da(db: AsyncSession = Depends(get_db), _=Depends(vision_glo
     return list(result.scalars().all())
 
 
+@router.get("/dashboard-stats")
+async def dashboard_stats(db: AsyncSession = Depends(get_db), _=Depends(vision_globale)):
+    """Statistiques agrégées pour le tableau de bord général : nombre de
+    demandes par mois et par service, avec la répartition par statut (dont
+    "recue" = terminée et "rejetee" = refusée), et le montant réellement
+    dépensé — basé sur les lignes de commande (prix saisis par les Achats à
+    la commande passée), pas sur les lignes demandées au départ."""
+    result = await db.execute(select(DemandeAchat).options(*da_service._load_options()))
+    demandes = list(result.scalars().all())
+
+    par_mois: dict[str, dict] = {}
+    par_service: dict[str, dict] = {}
+
+    def _bucket(store: dict, cle: str) -> dict:
+        if cle not in store:
+            store[cle] = {"total": 0, "montant": 0.0}
+        return store[cle]
+
+    for da in demandes:
+        mois_cle = da.date_demande.strftime("%Y-%m")
+        montant = da.montant_total_commande
+        for store, cle in ((par_mois, mois_cle), (par_service, da.service_demandeur)):
+            b = _bucket(store, cle)
+            b["total"] += 1
+            b["montant"] += montant
+            b[da.statut.value] = b.get(da.statut.value, 0) + 1
+
+    return {
+        "par_mois": [{"cle": k, **v} for k, v in sorted(par_mois.items())],
+        "par_service": [{"cle": k, **v} for k, v in sorted(par_service.items(), key=lambda kv: -kv[1]["total"])],
+        "montant_total": sum(da.montant_total_commande for da in demandes),
+    }
+
+
 @router.post("/users/{user_id}/deverrouiller")
 async def deverrouiller(user_id: int, db: AsyncSession = Depends(get_db), admin_user=Depends(admin_only)):
     from app.services.user_service import deverrouiller_compte
@@ -76,26 +110,93 @@ async def deverrouiller(user_id: int, db: AsyncSession = Depends(get_db), admin_
 
 @router.get("/journal-audit")
 async def journal_audit(limite: int = 200, db: AsyncSession = Depends(get_db), _=Depends(admin_only)):
-    from app.models.models import JournalAudit
+    """Journal 'qui a fait quoi' — fusionne deux sources dans une même
+    timeline : les événements de sécurité (connexions, verrouillages...) et
+    les actions métier sur les demandes d'achat (création, validation, rejet,
+    BC créé, commande passée, réception...). Avant, seuls les événements de
+    sécurité étaient visibles ici ; les actions métier n'apparaissaient qu'une
+    DA à la fois, dans l'onglet Historique de chaque fiche."""
+    from app.models.models import JournalAudit, HistoriqueValidation
     from sqlalchemy.orm import selectinload
-    result = await db.execute(
+
+    result_securite = await db.execute(
         select(JournalAudit)
         .options(selectinload(JournalAudit.utilisateur))
         .order_by(JournalAudit.date_evenement.desc())
         .limit(limite)
     )
-    items = result.scalars().all()
-    return [
+    evenements = [
         {
-            "id": j.id,
+            "id": f"sec-{j.id}",
+            "type": "securite",
             "username_saisi": j.username_saisi,
             "evenement": j.evenement,
             "details": j.details,
             "date_evenement": j.date_evenement,
             "utilisateur_nom": f"{j.utilisateur.prenom} {j.utilisateur.nom}".strip() if j.utilisateur else None,
+            "demande_numero": None,
         }
-        for j in items
+        for j in result_securite.scalars().all()
     ]
+
+    result_actions = await db.execute(
+        select(HistoriqueValidation)
+        .options(selectinload(HistoriqueValidation.utilisateur), selectinload(HistoriqueValidation.demande))
+        .order_by(HistoriqueValidation.date_action.desc())
+        .limit(limite)
+    )
+    evenements += [
+        {
+            "id": f"act-{h.id}",
+            "type": "action",
+            "username_saisi": None,
+            "evenement": h.action.value,
+            "details": h.commentaire,
+            "date_evenement": h.date_action,
+            "utilisateur_nom": f"{h.utilisateur.prenom} {h.utilisateur.nom}".strip(),
+            "demande_numero": h.demande.numero if h.demande else None,
+        }
+        for h in result_actions.scalars().all()
+    ]
+
+    evenements.sort(key=lambda e: e["date_evenement"], reverse=True)
+    return evenements[:limite]
+
+
+@router.get("/usage-stats")
+async def usage_stats(jours: int = 30, db: AsyncSession = Depends(get_db), _=Depends(admin_only)):
+    """Fréquence d'utilisation de l'appli : nombre de connexions réussies par
+    jour sur les N derniers jours, et par utilisateur, à partir du journal de
+    sécurité déjà tenu (événement 'connexion_reussie')."""
+    from app.models.models import JournalAudit
+    from sqlalchemy.orm import selectinload
+    from datetime import datetime, timedelta
+
+    depuis = datetime.utcnow() - timedelta(days=jours)
+    result = await db.execute(
+        select(JournalAudit)
+        .options(selectinload(JournalAudit.utilisateur))
+        .where(JournalAudit.evenement == "connexion_reussie", JournalAudit.date_evenement >= depuis)
+        .order_by(JournalAudit.date_evenement.asc())
+    )
+    connexions = list(result.scalars().all())
+
+    par_jour: dict[str, int] = {}
+    par_utilisateur: dict[str, int] = {}
+    for c in connexions:
+        jour = c.date_evenement.strftime("%Y-%m-%d")
+        par_jour[jour] = par_jour.get(jour, 0) + 1
+        nom = f"{c.utilisateur.prenom} {c.utilisateur.nom}".strip() if c.utilisateur else (c.username_saisi or "?")
+        par_utilisateur[nom] = par_utilisateur.get(nom, 0) + 1
+
+    return {
+        "total_connexions": len(connexions),
+        "par_jour": [{"jour": k, "connexions": v} for k, v in sorted(par_jour.items())],
+        "par_utilisateur": sorted(
+            [{"utilisateur": k, "connexions": v} for k, v in par_utilisateur.items()],
+            key=lambda x: -x["connexions"],
+        ),
+    }
 
 from pydantic import BaseModel
 

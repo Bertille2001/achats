@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime
-from sqlalchemy import Integer, String, Text, DateTime, ForeignKey, Enum as SAEnum, Boolean, func
+from sqlalchemy import Integer, String, Text, DateTime, ForeignKey, Enum as SAEnum, Boolean, Float, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.session import Base
 
@@ -137,6 +137,16 @@ class DemandeAchat(Base):
     fichiers: Mapped[list["FichierDA"]] = relationship(back_populates="demande", cascade="all, delete-orphan")
     historique: Mapped[list["HistoriqueValidation"]] = relationship(back_populates="demande", cascade="all, delete-orphan", order_by="HistoriqueValidation.date_action")
     messages: Mapped[list["MessageDA"]] = relationship(back_populates="demande", cascade="all, delete-orphan", order_by="MessageDA.date_envoi")
+    # Lignes réellement commandées (désignation/quantité/prix), saisies par
+    # l'acheteur au moment de "commande passée" — peuvent différer de ce qui
+    # était initialement demandé (ex : 1 PC demandé, 2 commandés parce qu'il en
+    # manquait aussi ailleurs). C'est cette liste qui sert de base au montant
+    # dépensé affiché dans les tableaux de bord, pas les lignes demandées.
+    lignes_commande: Mapped[list["LigneCommande"]] = relationship(back_populates="demande", cascade="all, delete-orphan")
+
+    @property
+    def montant_total_commande(self) -> float:
+        return sum((l.quantite * l.prix_unitaire) for l in self.lignes_commande)
 
 
 class LigneDA(Base):
@@ -233,3 +243,64 @@ class MessageDA(Base):
 
     demande: Mapped["DemandeAchat"] = relationship(back_populates="messages")
     auteur: Mapped["Utilisateur"] = relationship()
+
+
+class LigneCommande(Base):
+    """Ligne réellement commandée par le service Achats (désignation, quantité,
+    prix unitaire), saisie à l'étape "commande passée". Distincte des lignes
+    demandées (LigneDA) car ce qui est finalement commandé peut différer de ce
+    qui a été demandé au départ (quantité ajustée, référence différente...)."""
+    __tablename__ = "lignes_commande"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    demande_id: Mapped[int] = mapped_column(ForeignKey("demandes_achat.id", ondelete="CASCADE"))
+    designation: Mapped[str] = mapped_column(String(300))
+    quantite: Mapped[int] = mapped_column(Integer)
+    prix_unitaire: Mapped[float] = mapped_column(Float)
+
+    demande: Mapped["DemandeAchat"] = relationship(back_populates="lignes_commande")
+
+
+class EtatEquipement(str, enum.Enum):
+    EN_SERVICE = "en_service"
+    EN_PANNE = "en_panne"
+    HORS_SERVICE = "hors_service"
+
+
+class Equipement(Base):
+    """Registre de tout ce qui est acheté et déployé : caractéristiques
+    (référence/n° de série), lieu d'utilisation, responsable et état. Relié
+    (optionnellement) à la demande d'achat d'origine pour remonter jusqu'au
+    prix payé et à l'historique de validation."""
+    __tablename__ = "equipements"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    demande_id: Mapped[int | None] = mapped_column(ForeignKey("demandes_achat.id", ondelete="SET NULL"), nullable=True)
+    designation: Mapped[str] = mapped_column(String(300))
+    reference: Mapped[str | None] = mapped_column(String(200))
+    lieu_deploiement: Mapped[str | None] = mapped_column(String(200))
+    responsable: Mapped[str | None] = mapped_column(String(200))  # texte libre (nom/service), pas un compte
+    etat: Mapped[EtatEquipement] = mapped_column(SAEnum(EtatEquipement), default=EtatEquipement.EN_SERVICE)
+    garantie_fin: Mapped[str | None] = mapped_column(String(50))
+    prix_unitaire: Mapped[float | None] = mapped_column(Float, nullable=True)
+    cree_le: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    ajoute_par_id: Mapped[int] = mapped_column(ForeignKey("utilisateurs.id"))
+
+    demande: Mapped["DemandeAchat | None"] = relationship()
+    ajoute_par: Mapped["Utilisateur"] = relationship(foreign_keys=[ajoute_par_id])
+
+
+class AbonnementNotification(Base):
+    """Abonnement Web Push d'un navigateur pour un utilisateur — permet
+    d'envoyer une vraie notification système (même onglet en arrière-plan,
+    ou navigateur fermé selon le navigateur) quand un nouveau message arrive."""
+    __tablename__ = "abonnements_notification"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    utilisateur_id: Mapped[int] = mapped_column(ForeignKey("utilisateurs.id", ondelete="CASCADE"))
+    endpoint: Mapped[str] = mapped_column(String(500), unique=True)
+    p256dh: Mapped[str] = mapped_column(String(200))
+    auth: Mapped[str] = mapped_column(String(100))
+    cree_le: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    utilisateur: Mapped["Utilisateur"] = relationship()

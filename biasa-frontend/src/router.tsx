@@ -17,6 +17,7 @@ import ReinitialiserMotDePassePage from './pages/ReinitialiserMotDePasse'
 import JournalAuditPage from './pages/JournalAudit'
 import ServicesPage from './pages/Services'
 import ModifierDAPage from './pages/ModifierDA'
+import EquipementsPage from './pages/Equipements'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
       { path: '/journal-audit', element: <JournalAuditPage /> },
       { path: '/services', element: <ServicesPage /> },
       { path: '/demandes/:id/modifier', element: <ModifierDAPage /> },
+      { path: '/equipements', element: <EquipementsPage /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

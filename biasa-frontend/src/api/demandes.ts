@@ -1,5 +1,5 @@
 import client from './client'
-import type { DemandeAchat, DemandeAchatForm, FichierDA, MessageDA, ServiceConfig } from '../types'
+import type { DemandeAchat, DemandeAchatForm, FichierDA, MessageDA, ServiceConfig, Equipement } from '../types'
 export const demandesApi = {
   mesDemandes: async (): Promise<DemandeAchat[]> => { const { data } = await client.get<DemandeAchat[]>('/demandes/mes-demandes'); return data },
   aValider: async (): Promise<DemandeAchat[]> => { const { data } = await client.get<DemandeAchat[]>('/demandes/a-valider'); return data },
@@ -13,7 +13,7 @@ export const demandesApi = {
   confirmerReceptionDemandeur: async (id: number): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/confirmer-reception-demandeur`); return data },
   confirmerReceptionAcheteur: async (id: number): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/confirmer-reception-acheteur`); return data },
   marquerBcCree: async (id: number): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/marquer-bc-cree`); return data },
-  marquerCommande: async (id: number): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/marquer-commande`); return data },
+  marquerCommande: async (id: number, lignes: { designation: string; quantite: number; prix_unitaire: number }[]): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/marquer-commande`, { lignes }); return data },
   marquerLivre: async (id: number): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/marquer-livre`); return data },
   listerMessages: async (id: number): Promise<MessageDA[]> => { const { data } = await client.get<MessageDA[]>(`/demandes/${id}/messages`); return data },
   envoyerMessage: async (id: number, texte: string): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/messages`, { texte }); return data },
@@ -27,4 +27,22 @@ export const demandesApi = {
 export const servicesApi = {
   lister: async (): Promise<ServiceConfig[]> => { const { data } = await client.get<ServiceConfig[]>('/admin/services'); return data },
   modifier: async (nom: string, peut_traiter_soi_meme: boolean): Promise<ServiceConfig> => { const { data } = await client.put<ServiceConfig>(`/admin/services/${encodeURIComponent(nom)}`, { peut_traiter_soi_meme }); return data },
+}
+
+export interface EquipementForm {
+  demande_id?: number | null
+  designation: string
+  reference?: string | null
+  lieu_deploiement?: string | null
+  responsable?: string | null
+  etat?: string
+  garantie_fin?: string | null
+  prix_unitaire?: number | null
+}
+
+export const equipementsApi = {
+  lister: async (): Promise<Equipement[]> => { const { data } = await client.get<Equipement[]>('/equipements'); return data },
+  creer: async (form: EquipementForm): Promise<Equipement> => { const { data } = await client.post<Equipement>('/equipements', form); return data },
+  modifier: async (id: number, form: Partial<EquipementForm>): Promise<Equipement> => { const { data } = await client.patch<Equipement>(`/equipements/${id}`, form); return data },
+  supprimer: async (id: number): Promise<void> => { await client.delete(`/equipements/${id}`) },
 }

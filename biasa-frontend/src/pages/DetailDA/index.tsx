@@ -147,6 +147,8 @@ export default function DetailDAPage() {
   const [envoiMessage, setEnvoiMessage] = useState(false)
   const [messagesVusAvant, setMessagesVusAvant] = useState(0)
   const [nbMessagesAffiches, setNbMessagesAffiches] = useState(15)
+  const [showCommandeForm, setShowCommandeForm] = useState(false)
+  const [lignesCommande, setLignesCommande] = useState<{ designation: string; quantite: number; prix_unitaire: number }[]>([])
   const discussionRef = useRef<HTMLDivElement>(null)
   const messageInputRef = useRef<HTMLTextAreaElement>(null)
   const [searchParams, setSearchParams] = useSearchParams()
@@ -592,7 +594,23 @@ export default function DetailDAPage() {
                   <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 500 }}>Traitement de la commande</div>
                   {[
                     { label: 'Bon de commande créé', fait: da.bc_cree_le, action: () => act(() => demandesApi.marquerBcCree(da.id)), peut: peutTraiter && !da.bc_cree_le },
-                    { label: 'Commande passée au fournisseur', fait: da.commande_le, action: () => act(() => demandesApi.marquerCommande(da.id)), peut: peutTraiter && !!da.bc_cree_le && !da.commande_le },
+                    {
+                      label: 'Commande passée au fournisseur',
+                      fait: da.commande_le,
+                      action: () => {
+                        // Pré-remplit avec les lignes demandées comme point de départ,
+                        // mais l'acheteur peut tout modifier avant de valider : ce qui
+                        // est réellement commandé (quantité, désignation) peut différer
+                        // de la demande d'origine, et c'est ce prix-là qui compte.
+                        setLignesCommande(
+                          da.lignes.length > 0
+                            ? da.lignes.map(l => ({ designation: l.designation, quantite: l.quantite, prix_unitaire: 0 }))
+                            : [{ designation: '', quantite: 1, prix_unitaire: 0 }]
+                        )
+                        setShowCommandeForm(true)
+                      },
+                      peut: peutTraiter && !!da.bc_cree_le && !da.commande_le,
+                    },
                     { label: 'Livraison reçue', fait: da.livre_le, action: () => act(() => demandesApi.marquerLivre(da.id)), peut: peutTraiter && !!da.commande_le && !da.livre_le },
                   ].map((etape, i, arr) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
@@ -614,6 +632,21 @@ export default function DetailDAPage() {
                   {!peutTraiter && (
                     <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>
                       Traité par le Service Achats{serviceAutorise ? ' ou votre service (autorisé)' : ''}.
+                    </div>
+                  )}
+                  {da.commande_le && da.lignes_commande.length > 0 && (
+                    <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+                      <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginBottom: 5, fontWeight: 500 }}>Ce qui a été réellement commandé</div>
+                      {da.lignes_commande.map(l => (
+                        <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12.5, padding: '3px 0' }}>
+                          <span>{l.quantite} × {l.designation}</span>
+                          <span style={{ color: 'var(--text-secondary)' }}>{(l.quantite * l.prix_unitaire).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      ))}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5, fontWeight: 700, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--border)', color: '#0B3C7A' }}>
+                        <span>Total dépensé</span>
+                        <span>{da.montant_total_commande.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -733,6 +766,70 @@ export default function DetailDAPage() {
         </div>
 
       </div>
+
+      {showCommandeForm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16 }}>
+          <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 12, padding: '20px 22px', width: 560, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' as const }}>
+            <div style={{ fontSize: 15.5, fontWeight: 600, color: '#0B3C7A', marginBottom: 4 }}>Commande passée — ce qui est réellement commandé</div>
+            <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 14 }}>
+              Ajuste les désignations/quantités si ce qui est commandé diffère de la demande initiale, et indique le prix unitaire de chaque ligne.
+            </div>
+
+            {lignesCommande.map((l, i) => (
+              <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
+                <input
+                  value={l.designation}
+                  onChange={e => setLignesCommande(ls => ls.map((x, j) => j === i ? { ...x, designation: e.target.value } : x))}
+                  placeholder="Désignation"
+                  style={{ flex: 1, fontSize: 13, padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 5, background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                />
+                <input
+                  type="number" min={1} value={l.quantite}
+                  onChange={e => setLignesCommande(ls => ls.map((x, j) => j === i ? { ...x, quantite: Number(e.target.value) } : x))}
+                  placeholder="Qté"
+                  style={{ width: 62, fontSize: 13, padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 5, background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                />
+                <input
+                  type="number" min={0} step="0.01" value={l.prix_unitaire}
+                  onChange={e => setLignesCommande(ls => ls.map((x, j) => j === i ? { ...x, prix_unitaire: Number(e.target.value) } : x))}
+                  placeholder="Prix unitaire"
+                  style={{ width: 100, fontSize: 13, padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 5, background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                />
+                <button
+                  onClick={() => setLignesCommande(ls => ls.filter((_, j) => j !== i))}
+                  disabled={lignesCommande.length <= 1}
+                  title="Retirer cette ligne"
+                  style={{ padding: '5px 9px', fontSize: 13, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: lignesCommande.length <= 1 ? 'not-allowed' : 'pointer', color: 'var(--text-secondary)' }}
+                >×</button>
+              </div>
+            ))}
+
+            <button
+              onClick={() => setLignesCommande(ls => [...ls, { designation: '', quantite: 1, prix_unitaire: 0 }])}
+              style={{ fontSize: 12.5, color: '#1B9DE0', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', marginBottom: 10 }}
+            >+ Ajouter une ligne</button>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, color: '#0B3C7A', padding: '8px 0', borderTop: '1px solid var(--border)', marginBottom: 14 }}>
+              <span>Total</span>
+              <span>{lignesCommande.reduce((s, l) => s + l.quantite * l.prix_unitaire, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowCommandeForm(false)} disabled={al} style={{ padding: '7px 14px', fontSize: 13.5, border: '1px solid var(--border)', borderRadius: 6, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>Annuler</button>
+              <button
+                disabled={al || lignesCommande.some(l => !l.designation.trim() || l.quantite <= 0 || l.prix_unitaire < 0)}
+                onClick={async () => {
+                  await act(() => demandesApi.marquerCommande(da.id, lignesCommande))
+                  setShowCommandeForm(false)
+                }}
+                style={{ padding: '7px 16px', fontSize: 13.5, border: 'none', borderRadius: 6, background: al ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: al ? 'not-allowed' : 'pointer', fontWeight: 600 }}
+              >
+                {al ? 'En cours…' : 'Valider la commande'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
