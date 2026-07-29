@@ -194,7 +194,7 @@ export default function MesDemandesPage() {
                               </span>
                             </td>
                             {!vueMessagerie && (
-                              <td style={tdS}>{da.fichiers.length > 0 ? `${da.fichiers.length} fichier(s)` : '—'}</td>
+                              <td style={tdS}>{da.fichiers.length > 0 ? `${da.fichiers.length} fichier(s)` : '-'}</td>
                             )}
                             <td style={tdS} onClick={e => e.stopPropagation()}>
                               <button onClick={() => navigate(`/demandes/${da.id}${vueMessagerie ? '?discussion=1' : ''}`)} style={{ padding: '4px 8px', fontSize: 12.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>Voir</button>

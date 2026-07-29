@@ -19,7 +19,7 @@ function Stat({ label, value, color = '#0B3C7A' }: { label: string; value: numbe
 }
 
 const ROLE_EXPLICATIONS: Record<string, string> = {
-  demandeur: "Vous créez vos demandes d'achat et suivez leur avancement. Une fois la commande livrée, n'oubliez pas de confirmer la réception depuis la fiche de votre demande — c'est ce qui clôture le circuit.",
+  demandeur: "Vous créez vos demandes d'achat et suivez leur avancement. Une fois la commande livrée, n'oubliez pas de confirmer la réception depuis la fiche de votre demande : c'est ce qui clôture le circuit.",
   responsable: "Vous validez en premier les demandes d'achat de votre service, avant le DAF. Vérifiez que le besoin est légitime et que les quantités sont raisonnables.",
   daf: "Vous validez l'engagement budgétaire après le responsable de service. Une fois votre validation faite, la demande est approuvée et peut être traitée par le Service Achats.",
   acheteur: "Vous traitez les demandes approuvées : sourcing, commande auprès du fournisseur, puis confirmation de la livraison une fois la commande remise au demandeur.",

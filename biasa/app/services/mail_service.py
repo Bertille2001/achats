@@ -24,13 +24,13 @@ async def send_email(to: str, subject: str, body: str) -> None:
 
 
 async def notifier_validateur(email: str, numero_da: str, demandeur: str, urgence: str) -> None:
-    subject = f"[BIASA] Demande à valider — {numero_da}"
+    subject = f"[BIASA] Demande à valider : {numero_da}"
     body = f"<p>Bonjour,</p><p>La demande <strong>{numero_da}</strong> de {demandeur} (urgence : {urgence}) requiert votre validation.</p>"
     await send_email(email, subject, body)
 
 
 async def notifier_demandeur(email: str, numero_da: str, action: str, commentaire: str = "") -> None:
-    subject = f"[BIASA] Mise à jour — {numero_da}"
+    subject = f"[BIASA] Mise à jour : {numero_da}"
     body = f"<p>Bonjour,</p><p>Votre demande <strong>{numero_da}</strong> a été <strong>{action}</strong>.</p>{'<p>Commentaire : ' + commentaire + '</p>' if commentaire else ''}"
     await send_email(email, subject, body)
 

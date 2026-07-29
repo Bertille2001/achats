@@ -482,7 +482,7 @@ async def envoyer_message(db: AsyncSession, da_id: int, user: Utilisateur, texte
         destinataires = await _destinataires_notification(db, da, user.id)
         await notifier_nouveau_message(
             db, destinataires,
-            titre=f"Nouveau message — {da.numero}",
+            titre=f"Nouveau message : {da.numero}",
             corps=f"{user.prenom} {user.nom} : {texte[:100]}",
             url=f"/demandes/{da.id}?discussion=1",
         )

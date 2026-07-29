@@ -71,7 +71,7 @@ def cell_decision(h):
     if not h: return ''
     nom = f"{h['utilisateur']['prenom']} {h['utilisateur']['nom']}"
     dec = 'Validé' if 'validation' in h['action'] else 'Rejeté'
-    return f"{nom} — {dec}"
+    return f"{nom} : {dec}"
 
 
 def cell_date(h):
@@ -272,7 +272,7 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
     story.append(HRFlowable(width="100%", thickness=0.4, color=GRIS_BORD))
     story.append(P(
         f'Document généré le {datetime.now().strftime("%d/%m/%Y à %H:%M")} '
-        f'— Clinique BIASA · {da.get("numero", "")}',
+        f'Clinique BIASA · {da.get("numero", "")}',
         fontSize=7, textColor=colors.HexColor('#999999'), alignment=TA_CENTER
     ))
 

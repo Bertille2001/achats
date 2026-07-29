@@ -131,12 +131,12 @@ export default function JournalAuditPage() {
                   {entreesFiltrees.map(e => (
                     <tr key={e.id}>
                       <td style={tdS}>{fmt(e.date_evenement)}</td>
-                      <td style={tdS}>{e.utilisateur_nom || e.username_saisi || '—'}</td>
-                      <td style={tdS}>{e.demande_numero || '—'}</td>
+                      <td style={tdS}>{e.utilisateur_nom || e.username_saisi || '-'}</td>
+                      <td style={tdS}>{e.demande_numero || '-'}</td>
                       <td style={tdS}>
                         <span style={{ color: couleur(e.evenement), fontWeight: 500 }}>{EVENEMENT_LABELS[e.evenement] || e.evenement}</span>
                       </td>
-                      <td style={{ ...tdS, whiteSpace: 'normal' as const, color: 'var(--text-secondary)' }}>{e.details || '—'}</td>
+                      <td style={{ ...tdS, whiteSpace: 'normal' as const, color: 'var(--text-secondary)' }}>{e.details || '-'}</td>
                     </tr>
                   ))}
                 </tbody>

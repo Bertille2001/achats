@@ -103,7 +103,7 @@ export default function ConfigEmailPage() {
                 <input type="password" style={inpS} value={form.MAIL_PASSWORD} onChange={e => set('MAIL_PASSWORD', e.target.value)} placeholder="Mot de passe d'application" />
               </Field>
               <div style={{ padding: 10, background: 'var(--bg-secondary)', borderRadius: 6, fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                Pour Gmail, utilisez un <strong>mot de passe d'application</strong> (16 caractères) — pas votre mot de passe Google habituel.
+                Pour Gmail, utilisez un <strong>mot de passe d'application</strong> (16 caractères), pas votre mot de passe Google habituel.
               </div>
             </div>
           </div>

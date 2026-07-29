@@ -59,7 +59,7 @@ export default function HistoriqueValidationsPage() {
       <div style={{ padding: '11px 18px', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)' }}>
         <div style={{ fontSize: 15.5, fontWeight: 500 }}>Historique</div>
         <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 1 }}>
-          Toutes les demandes sur lesquelles vous avez agi — validées comme rejetées
+          Toutes les demandes sur lesquelles vous avez agi, validées comme rejetées
         </div>
       </div>
 
@@ -125,10 +125,10 @@ export default function HistoriqueValidationsPage() {
                         <td style={tdS}>
                           {monAction ? (
                             <span style={{ fontSize: 12.5, color: monAction.action.includes('rejet') ? '#a32d2d' : 'var(--text-primary)', fontWeight: monAction.action.includes('rejet') ? 600 : 400 }}>{ACTION_LABELS[monAction.action]}</span>
-                          ) : '—'}
+                          ) : '-'}
                         </td>
                         <td style={tdS}>
-                          {monAction ? fmt(monAction.date_action) : '—'}
+                          {monAction ? fmt(monAction.date_action) : '-'}
                         </td>
                         <td style={tdS}>
                           <button onClick={() => navigate(`/demandes/${da.id}`)} style={{ padding: '4px 8px', fontSize: 12.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>

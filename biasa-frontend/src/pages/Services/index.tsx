@@ -30,7 +30,7 @@ export default function ServicesPage() {
       <div style={{ padding: '11px 18px', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)' }}>
         <div style={{ fontSize: 15.5, fontWeight: 500 }}>Services</div>
         <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 1 }}>
-          Un service activé ici peut traiter lui-même ses commandes (BC créé / Commandé / Livré) sans passer par le Service Achats — n'importe quelle personne de ce service peut alors agir, quel que soit son rôle de compte.
+          Un service activé ici peut traiter lui-même ses commandes (BC créé / Commandé / Livré) sans passer par le Service Achats. N'importe quelle personne de ce service peut alors agir, quel que soit son rôle de compte.
         </div>
       </div>
 

@@ -211,7 +211,7 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 6 }}>Urgence <span style={{ color: '#c0392b' }}>*</span></div>
               <div style={{ display: 'flex', gap: 5, marginBottom: 10 }}>
-                {([['haute','Haute — 24h'],['moyenne','Moyenne — 48h'],['faible','Faible — >72h']] as [UrgenceDA,string][]).map(([v,l]) => (
+                {([['haute','Haute (24h)'],['moyenne','Moyenne (48h)'],['faible','Faible (>72h)']] as [UrgenceDA,string][]).map(([v,l]) => (
                   <button key={v} onClick={() => set('urgence', v)} style={{ flex: 1, padding: '7px', outline: form.urgence === v ? '2px solid #0B3C7A' : 'none', outlineOffset: form.urgence === v ? '-2px' : '0', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, background: form.urgence === v ? '#1B9DE0' : '#eaf2fb', color: form.urgence === v ? '#fff' : '#5e6f85', fontWeight: form.urgence === v ? 600 : 400 }}>{l}</button>
                 ))}
               </div>

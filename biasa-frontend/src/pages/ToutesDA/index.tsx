@@ -55,7 +55,7 @@ export default function ToutesDaPage() {
       <div style={{ padding: '11px 18px', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <div style={{ fontSize: 15.5, fontWeight: 500 }}>Toutes les demandes d'achat</div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 1 }}>{filtrees.length} demande(s) — vision globale du circuit</div>
+          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 1 }}>{filtrees.length} demande(s), vision globale du circuit</div>
         </div>
       </div>
 
@@ -128,7 +128,7 @@ export default function ToutesDaPage() {
                           {STATUT_LABELS[da.statut]}
                         </span>
                       </td>
-                      <td style={tdS}>{da.fichiers.length > 0 ? `${da.fichiers.length} fichier(s)` : '—'}</td>
+                      <td style={tdS}>{da.fichiers.length > 0 ? `${da.fichiers.length} fichier(s)` : '-'}</td>
                       <td style={tdS}>
                         <button onClick={() => navigate(`/demandes/${da.id}`)} style={{ padding: '4px 8px', fontSize: 12.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>Voir</button>
                       </td>

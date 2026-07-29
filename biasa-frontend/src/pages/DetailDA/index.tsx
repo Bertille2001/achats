@@ -49,7 +49,7 @@ function ApercuFichier({ daId, fichierId, nom }: { daId: number; fichierId: numb
     <div style={{ padding: '14px', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', gap: 10 }}>
       <div>
         <div style={{ fontSize: 13.5, fontWeight: 500 }}>{nom}</div>
-        <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>Aperçu non disponible — téléchargez pour ouvrir</div>
+        <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>Aperçu non disponible, téléchargez pour ouvrir</div>
       </div>
     </div>
   )
@@ -423,10 +423,10 @@ export default function DetailDAPage() {
                           <td style={mtd}>{l.numero_ligne}</td>
                           <td style={mtd}>{l.designation}</td>
                           <td style={mtd}>{l.quantite}</td>
-                          <td style={mtd}>{l.unite            || '—'}</td>
-                          <td style={mtd}>{l.stock_actuel     || '—'}</td>
-                          <td style={mtd}>{l.reference_marque || '—'}</td>
-                          <td style={mtd}>{l.observation      || '—'}</td>
+                          <td style={mtd}>{l.unite            || '-'}</td>
+                          <td style={mtd}>{l.stock_actuel     || '-'}</td>
+                          <td style={mtd}>{l.reference_marque || '-'}</td>
+                          <td style={mtd}>{l.observation      || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -436,10 +436,10 @@ export default function DetailDAPage() {
 
               {onglet === 'spec' && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
-                  <IF label="Normes"               value={da.normes_certifications || '—'} />
-                  <IF label="Date réception souhaitée" value={da.date_peremption_min||'—'} />
-                  <IF label="Fournisseur suggéré"   value={da.fournisseur_suggere  || '—'} />
-                  <IF label="Autres spécifications" value={da.autres_specs         || '—'} />
+                  <IF label="Normes"               value={da.normes_certifications || '-'} />
+                  <IF label="Date réception souhaitée" value={da.date_peremption_min||'-'} />
+                  <IF label="Fournisseur suggéré"   value={da.fournisseur_suggere  || '-'} />
+                  <IF label="Autres spécifications" value={da.autres_specs         || '-'} />
                   {da.lieu_utilisation && <IF label="Lieu d'utilisation" value={da.lieu_utilisation} full />}
                 </div>
               )}
@@ -770,7 +770,7 @@ export default function DetailDAPage() {
       {showCommandeForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 16 }}>
           <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 12, padding: '20px 22px', width: 560, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' as const }}>
-            <div style={{ fontSize: 15.5, fontWeight: 600, color: '#0B3C7A', marginBottom: 4 }}>Commande passée — ce qui est réellement commandé</div>
+            <div style={{ fontSize: 15.5, fontWeight: 600, color: '#0B3C7A', marginBottom: 4 }}>Commande passée : ce qui est réellement commandé</div>
             <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 14 }}>
               Ajuste les désignations/quantités si ce qui est commandé diffère de la demande initiale, et indique le prix unitaire de chaque ligne.
             </div>

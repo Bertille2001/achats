@@ -34,7 +34,7 @@ export default function ModifierDAPage() {
           <div style={{ fontSize: 14.5, fontWeight: 500 }}>Modifier la demande {da.numero}</div>
           {da.statut === 'rejetee' && (
             <div style={{ fontSize: 12.5, color: '#a32d2d', marginTop: 2 }}>
-              Demande rejetée — vous pouvez la corriger et la renvoyer (une seule fois possible).
+              Demande rejetée : vous pouvez la corriger et la renvoyer (une seule fois possible).
             </div>
           )}
         </div>

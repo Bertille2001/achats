@@ -23,7 +23,7 @@ function dotColor(s: string) {
 // chaque fiche pour savoir où en est une demande approuvée.
 function EtapesTraitement({ da }: { da: DemandeAchat }) {
   if (!['approuvee', 'recue'].includes(da.statut)) {
-    return <span style={{ color: 'var(--text-secondary)', fontSize: 12.5 }}>—</span>
+    return <span style={{ color: 'var(--text-secondary)', fontSize: 12.5 }}>-</span>
   }
   const etapes: [string, string | null][] = [
     ['BC', da.bc_cree_le],
@@ -109,20 +109,29 @@ export default function AValiderPage() {
     localStorage.setItem('da_vues', JSON.stringify([...nouvelles]))
   }
 
+  // "Réceptions" doit montrer tout le suivi de réception : aussi bien ce qui
+  // attend encore une confirmation (approuvee) que ce qui a déjà été reçu et
+  // confirmé des deux côtés (recue) — avant, "recue" disparaissait de cette
+  // vue dès que le cycle était terminé, ce qui cachait justement ce qui avait
+  // été reçu par les demandeurs.
   const demandesFiltrees = demandes
     .filter(d => dansLaPeriode(d.date_demande, periode))
-    .filter(d => !filtreStatut || d.statut === filtreStatut)
+    .filter(d => {
+      if (!filtreStatut) return true
+      if (filtreStatut === 'receptions') return d.statut === 'approuvee' || d.statut === 'recue'
+      return d.statut === filtreStatut
+    })
   // Compté sur la liste réellement affichée (pas sur toutes les DA), pour que
   // le nombre corresponde à ce qu'on voit vraiment à l'écran.
   const nonVues = demandesFiltrees.filter(d => !vues.has(d.id)).length
 
-  const titre = filtreStatut === 'approuvee'
+  const titre = filtreStatut === 'receptions'
     ? 'Réceptions'
     : filtreStatut === 'rejetee'
     ? 'Rejetées'
     : 'Toutes les demandes d\'achat'
-  const sousTitre = filtreStatut === 'approuvee'
-    ? 'Demandes approuvées, en attente de réception'
+  const sousTitre = filtreStatut === 'receptions'
+    ? 'Demandes approuvées en attente de réception, et déjà reçues'
     : filtreStatut === 'rejetee'
     ? 'Demandes rejetées, tous services confondus'
     : estAcheteur

@@ -23,7 +23,7 @@ export interface LigneDAForm { numero_ligne: number; designation: string; quanti
 export interface DemandeAchatForm { service_demandeur: string; poste_fonction: string; type_da: TypeDA; nature: NatureDA; motif: MotifDA; urgence: UrgenceDA; justification: string; normes_certifications: string; date_peremption_min: string; fournisseur_suggere: string; autres_specs: string; lieu_utilisation: string; lignes: LigneDAForm[] }
 
 export const MOTIF_LABELS: Record<MotifDA, string> = { reappro: 'Réapprovisionnement régulier', nouveau_besoin: 'Nouveau besoin', commande_specifique: 'Commande spécifique patient', remplacement: 'Remplacement / Panne', activite_urgente: 'Activité urgente' }
-export const URGENCE_LABELS: Record<UrgenceDA, string> = { haute: 'Haute — 24h', moyenne: 'Moyenne — 48h', faible: 'Faible — >72h' }
+export const URGENCE_LABELS: Record<UrgenceDA, string> = { haute: 'Haute (24h)', moyenne: 'Moyenne (48h)', faible: 'Faible (>72h)' }
 export const STATUT_LABELS: Record<StatutDA, string> = { brouillon: 'Brouillon', soumise: 'Soumise', att_responsable: 'Att. responsable', att_daf: 'Att. DAF', approuvee: 'Approuvée', rejetee: 'Rejetée', recue: 'Reçue' }
 export const STATUT_COLORS: Record<StatutDA, string> = {
   brouillon: '#8a96a3',        // gris — pas encore engagé

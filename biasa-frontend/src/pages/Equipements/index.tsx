@@ -78,7 +78,7 @@ export default function EquipementsPage() {
         <div>
           <div style={{ fontSize: 15.5, fontWeight: 500 }}>Équipements</div>
           <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 1 }}>
-            Tout ce qui a été acheté et déployé — {filtres.length} équipement(s), {totalValeur.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} au total
+            Tout ce qui a été acheté et déployé : {filtres.length} équipement(s), {totalValeur.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} au total
           </div>
         </div>
         {peutModifier && (
@@ -121,11 +121,11 @@ export default function EquipementsPage() {
                   {filtres.map(eq => (
                     <tr key={eq.id}>
                       <td style={{ ...tdS, fontWeight: 500 }}>{eq.designation}</td>
-                      <td style={tdS}>{eq.reference || '—'}</td>
-                      <td style={tdS}>{eq.lieu_deploiement || '—'}</td>
-                      <td style={tdS}>{eq.responsable || '—'}</td>
-                      <td style={tdS}>{eq.prix_unitaire != null ? eq.prix_unitaire.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) : '—'}</td>
-                      <td style={tdS}>{eq.garantie_fin || '—'}</td>
+                      <td style={tdS}>{eq.reference || '-'}</td>
+                      <td style={tdS}>{eq.lieu_deploiement || '-'}</td>
+                      <td style={tdS}>{eq.responsable || '-'}</td>
+                      <td style={tdS}>{eq.prix_unitaire != null ? eq.prix_unitaire.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) : '-'}</td>
+                      <td style={tdS}>{eq.garantie_fin || '-'}</td>
                       <td style={tdS}>
                         {peutModifier ? (
                           <select

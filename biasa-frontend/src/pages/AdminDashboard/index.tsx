@@ -74,7 +74,7 @@ export default function AdminDashboardPage() {
     <>
       <div style={{ padding: '11px 18px', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)' }}>
         <div style={{ fontSize: 15.5, fontWeight: 500 }}>Tableau de bord</div>
-        <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 1 }}>Vue d'ensemble — {new Date().toLocaleDateString('fr-FR')}</div>
+        <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 1 }}>Vue d'ensemble du {new Date().toLocaleDateString('fr-FR')}</div>
       </div>
 
       <div style={{ padding: '16px 18px', overflow: 'auto' }}>
@@ -311,8 +311,8 @@ export default function AdminDashboardPage() {
               <tbody>
                 {[
                   { role: 'Demandeur', voir: 'Ses propres demandes uniquement', faire: 'Créer/soumettre une demande, confirmer la réception de sa commande, écrire des messages sur ses demandes' },
-                  { role: 'Responsable', voir: 'Toutes les demandes (vision globale)', faire: 'Valider/rejeter les demandes en attente de son étape — sauf les siennes' },
-                  { role: 'DAF', voir: 'Toutes les demandes (vision globale)', faire: 'Valider/rejeter après le responsable — sauf les siennes' },
+                  { role: 'Responsable', voir: 'Toutes les demandes (vision globale)', faire: 'Valider/rejeter les demandes en attente de son étape, sauf les siennes' },
+                  { role: 'DAF', voir: 'Toutes les demandes (vision globale)', faire: 'Valider/rejeter après le responsable, sauf les siennes' },
                   { role: 'Achats (acheteur)', voir: 'Toutes les demandes + le registre équipements', faire: 'Traiter les demandes approuvées (BC, commande + prix, livraison), confirmer réception, gérer le registre équipements' },
                   { role: 'Admin', voir: 'Tout, y compris journal d\'audit et statistiques', faire: 'Tout ce que font les autres rôles, plus gestion des utilisateurs, services, config email et déverrouillage de comptes' },
                 ].map(r => (
@@ -326,7 +326,7 @@ export default function AdminDashboardPage() {
             </table>
           </div>
           <div style={{ padding: '8px 14px', fontSize: 11.5, color: 'var(--text-secondary)' }}>
-            Pour changer les droits d'une personne, change son rôle depuis Gestion Utilisateurs — les droits ci-dessus s'appliquent alors automatiquement.
+            Pour changer les droits d'une personne, change son rôle depuis Gestion Utilisateurs : les droits ci-dessus s'appliquent alors automatiquement.
           </div>
         </div>
       </div>

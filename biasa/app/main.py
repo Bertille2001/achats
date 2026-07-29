@@ -7,7 +7,7 @@ from app.db.session import engine, Base
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="Clinique BIASA — Gestion des achats",
+    title="Clinique BIASA - Gestion des achats",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -40,4 +40,4 @@ async def creer_tables_si_absentes():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "Clinique BIASA — Achats"}
+    return {"status": "ok", "service": "Clinique BIASA - Achats"}

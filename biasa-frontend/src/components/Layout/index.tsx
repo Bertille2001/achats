@@ -215,7 +215,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               propres demandes) */}
           {(estAcheteur && !estAdmin) && (
             <>
-              <NavItem to="/a-valider?statut=approuvee" label="Réceptions" dot={dot} />
+              <NavItem to="/a-valider?statut=receptions" label="Réceptions" dot={dot} />
               <NavItem to="/a-valider?statut=rejetee" label="Rejetées" dot={dot} />
             </>
           )}

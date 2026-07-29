@@ -171,8 +171,8 @@ export default function GestionUsersPage() {
                     <tr key={u.id} style={{ opacity: u.actif ? 1 : 0.5 }}>
                       <td style={tdS}><span style={{ fontWeight: 500 }}>{u.prenom} {u.nom}</span></td>
                       <td style={tdS}>{u.username}</td>
-                      <td style={tdS}>{u.service || '—'}</td>
-                      <td style={tdS}>{u.poste || '—'}</td>
+                      <td style={tdS}>{u.service || '-'}</td>
+                      <td style={tdS}>{u.poste || '-'}</td>
                       <td style={tdS}>
                         <span style={{ fontSize: 11.5, padding: '2px 7px', border: '1px solid var(--border)', borderRadius: 5, color: 'var(--text-secondary)' }}>
                           {ROLE_LABELS[u.role]}
@@ -222,7 +222,7 @@ export default function GestionUsersPage() {
                 <Field label="Nom"><input style={inp} value={form.nom} onChange={e => set('nom', e.target.value)} /></Field>
               </div>
               <Field label="Nom d'utilisateur"><input style={inp} value={form.username} onChange={e => set('username', e.target.value)} /></Field>
-              <Field label="Email (optionnel — pour les notifications)"><input type="email" style={inp} value={form.email} onChange={e => set('email', e.target.value)} /></Field>
+              <Field label="Email (optionnel, pour les notifications)"><input type="email" style={inp} value={form.email} onChange={e => set('email', e.target.value)} /></Field>
               <Field label={editUser ? 'Nouveau mot de passe (laisser vide = inchangé)' : 'Mot de passe provisoire'}>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <input type="text" style={inp} value={form.mot_de_passe} onChange={e => set('mot_de_passe', e.target.value)} placeholder={editUser ? '••••••••' : ''} />
@@ -230,7 +230,7 @@ export default function GestionUsersPage() {
                 </div>
                 {!editUser && (
                   <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 4 }}>
-                    Communiquez ce mot de passe à la personne — elle devra le changer à sa première connexion.
+                    Communiquez ce mot de passe à la personne, elle devra le changer à sa première connexion.
                   </div>
                 )}
               </Field>
