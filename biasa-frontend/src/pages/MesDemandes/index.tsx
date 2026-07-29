@@ -54,18 +54,26 @@ export default function MesDemandesPage() {
   const navigate = useNavigate()
   const { utilisateur } = useAuthStore()
 
+  // "Mes demandes" doit toujours signifier "les demandes que j'ai moi-même
+  // soumises", pour tout le monde — y compris responsable/DAF/achats/admin.
+  // Avant, ces rôles chargeaient ici TOUTES les demandes du circuit (comme sur
+  // "À valider"/"Toutes les DA"), ce qui mélangeait "ce que j'ai demandé" et
+  // "ce que je dois valider" dans la même liste, sous le même intitulé — d'où
+  // la confusion. Seule la vue Messagerie garde une vision large (il faut
+  // pouvoir repérer un message sur n'importe quelle demande qu'on peut voir,
+  // pas seulement les siennes).
   const charger = async () => {
     setLoading(true)
     try {
       const role = utilisateur?.role
-      if (role && ['acheteur', 'admin', 'responsable', 'daf'].includes(role)) {
+      if (vueMessagerie && role && ['acheteur', 'admin', 'responsable', 'daf'].includes(role)) {
         setDemandes(await demandesApi.toutesDemandesAcheteur().catch(() => demandesApi.mesDemandes()))
       } else {
         setDemandes(await demandesApi.mesDemandes())
       }
     } finally { setLoading(false) }
   }
-  useEffect(() => { charger() }, [])
+  useEffect(() => { charger() }, [vueMessagerie])
 
   const dernierMessage = (da: DemandeAchat) =>
     da.messages.length > 0 ? da.messages[da.messages.length - 1].date_envoi : da.date_demande
@@ -146,7 +154,10 @@ export default function MesDemandesPage() {
                     <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
                       <thead>
                         <tr style={{ background: 'var(--bg-secondary)' }}>
-                          {['N° DA','Date','Type','Motif','Urgence','Statut','Fichiers',''].map(h => (
+                          {(vueMessagerie
+                            ? ['N° DA','Dernier message','Statut','']
+                            : ['N° DA','Date','Type','Motif','Urgence','Statut','Fichiers','']
+                          ).map(h => (
                             <th key={h} style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-secondary)', textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
                           ))}
                         </tr>
@@ -155,17 +166,36 @@ export default function MesDemandesPage() {
                         {demandesPage.map(da => (
                           <tr key={da.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/demandes/${da.id}${vueMessagerie ? '?discussion=1' : ''}`)}>
                             <td style={tdS}><span style={{ fontWeight: 500 }}>{da.numero}</span><BadgeMessages da={da} /></td>
-                            <td style={tdS}>{fmt(da.date_demande)}</td>
-                            <td style={tdS}>{da.type_da === 'medical' ? 'Médical' : 'Bien/Service'}</td>
-                            <td style={tdS}>{MOTIF_LABELS[da.motif]}</td>
-                            <td style={tdS}><span style={{ color: URGENCE_COLORS[da.urgence], fontWeight: 600 }}>{URGENCE_LABELS[da.urgence]}</span></td>
+                            {vueMessagerie ? (
+                              <td style={{ ...tdS, whiteSpace: 'normal' as const, maxWidth: 420 }}>
+                                {da.messages.length > 0 && (() => {
+                                  const dernier = da.messages[da.messages.length - 1]
+                                  const texte = dernier.texte.length > 90 ? dernier.texte.slice(0, 90) + '…' : dernier.texte
+                                  return (
+                                    <div>
+                                      <span style={{ fontWeight: 600, color: '#0B3C7A' }}>{dernier.auteur.prenom} {dernier.auteur.nom} : </span>
+                                      <span style={{ color: 'var(--text-secondary)' }}>{texte}</span>
+                                    </div>
+                                  )
+                                })()}
+                              </td>
+                            ) : (
+                              <>
+                                <td style={tdS}>{fmt(da.date_demande)}</td>
+                                <td style={tdS}>{da.type_da === 'medical' ? 'Médical' : 'Bien/Service'}</td>
+                                <td style={tdS}>{MOTIF_LABELS[da.motif]}</td>
+                                <td style={tdS}><span style={{ color: URGENCE_COLORS[da.urgence], fontWeight: 600 }}>{URGENCE_LABELS[da.urgence]}</span></td>
+                              </>
+                            )}
                             <td style={tdS}>
                               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, color: dotColor(da.statut), fontWeight: 600 }}>
                                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor(da.statut) }} />
                                 {STATUT_LABELS[da.statut]}
                               </span>
                             </td>
-                            <td style={tdS}>{da.fichiers.length > 0 ? `${da.fichiers.length} fichier(s)` : '—'}</td>
+                            {!vueMessagerie && (
+                              <td style={tdS}>{da.fichiers.length > 0 ? `${da.fichiers.length} fichier(s)` : '—'}</td>
+                            )}
                             <td style={tdS} onClick={e => e.stopPropagation()}>
                               <button onClick={() => navigate(`/demandes/${da.id}${vueMessagerie ? '?discussion=1' : ''}`)} style={{ padding: '4px 8px', fontSize: 12.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>Voir</button>
                             </td>

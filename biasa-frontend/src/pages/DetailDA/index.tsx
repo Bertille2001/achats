@@ -247,8 +247,13 @@ export default function DetailDAPage() {
   if (loading) return <div style={{ padding: 32, color: 'var(--text-secondary)' }}>Chargement…</div>
   if (!da) return <div style={{ padding: 32, color: 'var(--text-secondary)' }}>Demande introuvable.</div>
 
-  const peutValResp = utilisateur?.role === 'responsable'
-  const peutValDaf  = utilisateur?.role === 'daf'
+  // On ne peut jamais valider/rejeter sa propre demande, même si son compte a
+  // le rôle responsable/DAF (n'importe qui peut soumettre une DA pour
+  // lui-même) — le backend bloque déjà ce cas, on masque aussi les boutons
+  // côté écran pour ne pas laisser croire que l'action est possible.
+  const estSaPropreDemande = utilisateur?.id === da.demandeur.id
+  const peutValResp = utilisateur?.role === 'responsable' && !estSaPropreDemande
+  const peutValDaf  = utilisateur?.role === 'daf' && !estSaPropreDemande
   const estAcheteur = utilisateur?.role === 'acheteur' || utilisateur?.role === 'admin'
   const peutTraiter = estAcheteur || (serviceAutorise && utilisateur?.service === da.service_demandeur)
   // Messages "nouveaux" depuis la dernière visite, en excluant toujours ceux

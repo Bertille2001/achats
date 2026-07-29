@@ -79,7 +79,13 @@ async def demandes_a_valider(db: AsyncSession, user: Utilisateur) -> list[Demand
     else:
         return []
     result = await db.execute(
-        select(DemandeAchat).where(DemandeAchat.statut == statut_cible)
+        select(DemandeAchat).where(
+            DemandeAchat.statut == statut_cible,
+            # On ne peut pas valider sa propre demande (voir _interdire_auto_validation) :
+            # elle est donc exclue de la liste "à valider" plutôt que d'y apparaître
+            # sans aucune action possible. Elle reste bien visible dans "Mes demandes".
+            DemandeAchat.demandeur_id != user.id,
+        )
         .options(*_load_options()).order_by(DemandeAchat.date_demande.desc())
     )
     return list(result.scalars().all())
@@ -148,6 +154,7 @@ async def soumettre_demande(db: AsyncSession, da_id: int, user: Utilisateur) -> 
 async def valider_responsable(db: AsyncSession, da_id: int, user: Utilisateur, commentaire: str | None) -> DemandeAchat:
     da = await _get_da_or_404(db, da_id)
     _verifier_role(user, RoleUtilisateur.RESPONSABLE)
+    _interdire_auto_validation(da, user)
     if da.statut != StatutDA.ATT_RESPONSABLE:
         raise HTTPException(status_code=400, detail="Statut incorrect")
     da.statut = StatutDA.ATT_DAF
@@ -180,6 +187,7 @@ async def valider_responsable(db: AsyncSession, da_id: int, user: Utilisateur, c
 async def rejeter_responsable(db: AsyncSession, da_id: int, user: Utilisateur, commentaire: str) -> DemandeAchat:
     da = await _get_da_or_404(db, da_id)
     _verifier_role(user, RoleUtilisateur.RESPONSABLE)
+    _interdire_auto_validation(da, user)
     if da.statut != StatutDA.ATT_RESPONSABLE:
         raise HTTPException(status_code=400, detail="Statut incorrect")
     da.statut = StatutDA.REJETEE
@@ -202,6 +210,7 @@ async def rejeter_responsable(db: AsyncSession, da_id: int, user: Utilisateur, c
 async def valider_daf(db: AsyncSession, da_id: int, user: Utilisateur, commentaire: str | None) -> DemandeAchat:
     da = await _get_da_or_404(db, da_id)
     _verifier_role(user, RoleUtilisateur.DAF)
+    _interdire_auto_validation(da, user)
     if da.statut != StatutDA.ATT_DAF:
         raise HTTPException(status_code=400, detail="Statut incorrect")
     da.statut = StatutDA.APPROUVEE
@@ -225,6 +234,7 @@ async def valider_daf(db: AsyncSession, da_id: int, user: Utilisateur, commentai
 async def rejeter_daf(db: AsyncSession, da_id: int, user: Utilisateur, commentaire: str) -> DemandeAchat:
     da = await _get_da_or_404(db, da_id)
     _verifier_role(user, RoleUtilisateur.DAF)
+    _interdire_auto_validation(da, user)
     if da.statut != StatutDA.ATT_DAF:
         raise HTTPException(status_code=400, detail="Statut incorrect")
     da.statut = StatutDA.REJETEE
@@ -342,6 +352,16 @@ def _ajouter_historique(db, da_id, user_id, action, commentaire=None):
 def _verifier_role(user, role):
     if user.role not in (role, RoleUtilisateur.ADMIN):
         raise HTTPException(status_code=403, detail="Rôle insuffisant")
+
+
+def _interdire_auto_validation(da: DemandeAchat, user: Utilisateur):
+    """Un responsable/DAF ne peut pas valider ou rejeter sa propre demande,
+    même s'il l'a soumise en tant que simple demandeur (n'importe quel compte
+    peut soumettre une DA pour lui-même, quel que soit son rôle). Sans ce
+    garde-fou, la même personne pouvait à la fois demander et approuver,
+    et sa propre DA se retrouvait mélangée dans sa liste "à valider"."""
+    if da.demandeur_id == user.id and user.role != RoleUtilisateur.ADMIN:
+        raise HTTPException(status_code=403, detail="Vous ne pouvez pas valider ou rejeter votre propre demande.")
 
 
 async def peut_traiter_achats(db: AsyncSession, user: Utilisateur, da: DemandeAchat) -> bool:
