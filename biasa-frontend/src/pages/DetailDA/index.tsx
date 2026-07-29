@@ -91,7 +91,9 @@ function ouvrirFichier(daId: number, fichierId: number, nom: string) {
 }
 
 function telechargerFichier(daId: number, fichierId: number, nom: string) {
-  client.get(`/demandes/${daId}/fichiers/${fichierId}/apercu`, { responseType: 'blob' })
+  // Utilise la vraie route de téléchargement (pas l'aperçu) : accessible à
+  // toute personne pouvant voir la demande, avec le nom de fichier d'origine.
+  client.get(`/demandes/${daId}/fichiers/${fichierId}/telecharger`, { responseType: 'blob' })
     .then(res => {
       const url = URL.createObjectURL(res.data)
       const a = document.createElement('a')
@@ -470,27 +472,28 @@ export default function DetailDAPage() {
                             <div style={{ fontSize: 13.5, fontWeight: 500 }}>{f.nom_original}</div>
                             <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{Math.round(f.taille_octets / 1024)} Ko · {fmtD(f.uploade_le)}</div>
                           </div>
-                          {estAcheteur ? (
+                          <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                            {hasApercu && (
+                              <button
+                                onClick={() => ouvrirFichier(da.id, f.id, f.nom_original)}
+                                style={btnStyle}
+                              >
+                                Voir
+                              </button>
+                            )}
                             <button
                               onClick={() => telechargerFichier(da.id, f.id, f.nom_original)}
                               style={btnStyle}
                             >
                               Télécharger
                             </button>
-                          ) : (
-                            <button
-                              onClick={() => ouvrirFichier(da.id, f.id, f.nom_original)}
-                              style={btnStyle}
-                            >
-                              Voir
-                            </button>
-                          )}
+                          </div>
                         </div>
                       </div>
                     )
                   })}
                   <div style={{ marginTop: 8, fontSize: 12.5, color: 'var(--text-secondary)' }}>
-                    Aperçu visible par tous · Téléchargement réservé au service Achats.
+                    Aperçu et téléchargement visibles par toute personne pouvant voir cette demande.
                   </div>
                 </div>
               )}

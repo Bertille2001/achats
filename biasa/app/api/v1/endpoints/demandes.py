@@ -197,6 +197,15 @@ async def upload(da_id: int, file: UploadFile = File(...), db: AsyncSession = De
 
 @router.get("/{da_id}/fichiers/{fichier_id}/apercu")
 async def apercu(da_id: int, fichier_id: int, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+    # Faille de sécurité corrigée : cette route ne vérifiait avant aucun droit
+    # d'accès à la DA (n'importe quel utilisateur connecté pouvait prévisualiser
+    # le fichier de n'importe quelle demande en devinant/itérant les ID). On
+    # applique désormais la même règle que pour le reste de la DA (messages,
+    # détail) : un demandeur ne voit que ses propres demandes, tous les autres
+    # rôles ont une vision globale.
+    da = await da_service._get_da_or_404(db, da_id)
+    if not da_service.peut_voir_da(current_user, da):
+        raise HTTPException(status_code=403, detail="Accès refusé")
     result = await db.execute(
         select(FichierDA).where(FichierDA.id == fichier_id, FichierDA.demande_id == da_id)
     )

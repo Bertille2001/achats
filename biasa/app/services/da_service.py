@@ -66,9 +66,12 @@ async def demandes_a_valider(db: AsyncSession, user: Utilisateur) -> list[Demand
     elif user.role == RoleUtilisateur.DAF:
         statut_cible = StatutDA.ATT_DAF
     elif user.role in (RoleUtilisateur.ACHETEUR, RoleUtilisateur.ADMIN):
+      # Le workflow s'arrête une fois la DA "recue" (confirmee par le
+      # demandeur ET le service Achats) : une DA recue est terminee, elle ne
+      # doit plus apparaitre dans la liste des demandes a traiter.
       result = await db.execute(
         select(DemandeAchat)
-        .where(DemandeAchat.statut.in_([StatutDA.APPROUVEE, StatutDA.RECUE]))
+        .where(DemandeAchat.statut == StatutDA.APPROUVEE)
         .options(*_load_options())
         .order_by(DemandeAchat.date_demande.desc())
     )
@@ -314,8 +317,12 @@ async def upload_fichier(db: AsyncSession, da_id: int, file: UploadFile, user: U
 
 
 async def telecharger_fichier(db: AsyncSession, da_id: int, fichier_id: int, user: Utilisateur) -> tuple[Path, str]:
-    if user.role not in (RoleUtilisateur.ACHETEUR, RoleUtilisateur.ADMIN):
-        raise HTTPException(status_code=403, detail="Téléchargement réservé au service Achats")
+    # Le téléchargement suit la même règle de visibilité que le reste de la DA
+    # (détail, messages, aperçu) : toute personne pouvant voir la demande peut
+    # télécharger ses fichiers joints, pas seulement le service Achats.
+    da = await _get_da_or_404(db, da_id)
+    if not peut_voir_da(user, da):
+        raise HTTPException(status_code=403, detail="Accès refusé")
     result = await db.execute(
         select(FichierDA).where(FichierDA.id == fichier_id, FichierDA.demande_id == da_id)
     )
