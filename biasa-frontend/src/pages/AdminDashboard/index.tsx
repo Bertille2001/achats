@@ -209,7 +209,6 @@ export default function AdminDashboardPage() {
           <div style={card}>
             <div style={cardHead}>
               <span>Par service</span>
-              <button onClick={() => navigate('/equipements')} style={{ padding: '4px 8px', fontSize: 12.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>Voir les équipements</button>
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>

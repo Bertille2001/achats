@@ -222,16 +222,11 @@ export default function Layout({ children }: { children: ReactNode }) {
 
           {estValidateur && <NavItem to="/historique-validations" label="Historique" dot={dot} />}
 
-          {(estValidateur || (estAcheteur && !estAdmin)) && (
-            <NavItem to="/equipements" label="Équipements" dot={dot} />
-          )}
-
           {estAdmin && (
             <>
               <div style={{ fontSize: 10.5, color: '#c4c4be', padding: '12px 10px 4px', letterSpacing: '0.8px', textTransform: 'uppercase' as const }}>Administration</div>
               <NavItem to="/admin" label="Tableau de bord" dot={dot} />
               <NavItem to="/admin/toutes-da" label="Toutes les DA" dot={dot} />
-              <NavItem to="/equipements" label="Équipements" dot={dot} />
               <NavItem to="/gestion-users" label="Utilisateurs" dot={dot} />
               <NavItem to="/parametres" label="Paramètres" dot={dot} />
               <NavItem to="/config-email" label="Config. email" dot={dot} />

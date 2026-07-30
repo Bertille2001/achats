@@ -261,35 +261,6 @@ class LigneCommande(Base):
     demande: Mapped["DemandeAchat"] = relationship(back_populates="lignes_commande")
 
 
-class EtatEquipement(str, enum.Enum):
-    EN_SERVICE = "en_service"
-    EN_PANNE = "en_panne"
-    HORS_SERVICE = "hors_service"
-
-
-class Equipement(Base):
-    """Registre de tout ce qui est acheté et déployé : caractéristiques
-    (référence/n° de série), lieu d'utilisation, responsable et état. Relié
-    (optionnellement) à la demande d'achat d'origine pour remonter jusqu'au
-    prix payé et à l'historique de validation."""
-    __tablename__ = "equipements"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    demande_id: Mapped[int | None] = mapped_column(ForeignKey("demandes_achat.id", ondelete="SET NULL"), nullable=True)
-    designation: Mapped[str] = mapped_column(String(300))
-    reference: Mapped[str | None] = mapped_column(String(200))
-    lieu_deploiement: Mapped[str | None] = mapped_column(String(200))
-    responsable: Mapped[str | None] = mapped_column(String(200))  # texte libre (nom/service), pas un compte
-    etat: Mapped[EtatEquipement] = mapped_column(SAEnum(EtatEquipement), default=EtatEquipement.EN_SERVICE)
-    garantie_fin: Mapped[str | None] = mapped_column(String(50))
-    prix_unitaire: Mapped[float | None] = mapped_column(Float, nullable=True)
-    cree_le: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    ajoute_par_id: Mapped[int] = mapped_column(ForeignKey("utilisateurs.id"))
-
-    demande: Mapped["DemandeAchat | None"] = relationship()
-    ajoute_par: Mapped["Utilisateur"] = relationship(foreign_keys=[ajoute_par_id])
-
-
 class AbonnementNotification(Base):
     """Abonnement Web Push d'un navigateur pour un utilisateur — permet
     d'envoyer une vraie notification système (même onglet en arrière-plan,
