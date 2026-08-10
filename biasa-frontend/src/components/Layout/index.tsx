@@ -102,11 +102,12 @@ export default function Layout({ children }: { children: ReactNode }) {
       if (estAcheteur && !estAdmin) {
         // Le badge "à traiter" de l'acheteur reflète les DA APPROUVÉES pas
         // encore entièrement traitées (BC créé -> commande passée ->
-        // livraison reçue -> réception confirmée côté achats). Les DA encore
-        // en attente du responsable/DAF ne concernent pas encore l'acheteur.
+        // livraison reçue). Seul le demandeur confirme la réception finale,
+        // le rôle de l'acheteur s'arrête à la livraison. Les DA encore en
+        // attente du responsable/DAF ne concernent pas encore l'acheteur.
         const aTraiter = all.filter((da: any) =>
           da.statut === 'approuvee' &&
-          (!da.bc_cree_le || !da.commande_le || !da.livre_le || !da.confirmation_acheteur_le)
+          (!da.bc_cree_le || !da.commande_le || !da.livre_le)
         )
         setNbAValider(aTraiter.length)
       } else if (estValidateur) {

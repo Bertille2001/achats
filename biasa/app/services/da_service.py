@@ -267,8 +267,11 @@ async def confirmer_reception_demandeur(db: AsyncSession, da_id: int, user: Util
         raise HTTPException(status_code=400, detail="Vous avez déjà confirmé la réception.")
     da.confirmation_demandeur_par_id = user.id
     da.confirmation_demandeur_le = datetime.utcnow()
-    if da.confirmation_acheteur_le is not None:
-        da.statut = StatutDA.RECUE
+    # Seule la confirmation du demandeur est requise pour clôturer la
+    # demande — le Service Achats a déjà validé la réception en marquant la
+    # livraison comme reçue plus haut dans le circuit, pas besoin d'une
+    # double confirmation.
+    da.statut = StatutDA.RECUE
     _ajouter_historique(db, da.id, user.id, ActionHistorique.CONFIRMATION_RECEPTION_DEMANDEUR)
     await db.flush()
     return await _get_da_or_404(db, da_id)

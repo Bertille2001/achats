@@ -29,11 +29,11 @@ function EtapesTraitement({ da }: { da: DemandeAchat }) {
     ['BC', da.bc_cree_le],
     ['Commande', da.commande_le],
     ['Livraison', da.livre_le],
-    // Tant que les deux confirmations de réception (demandeur + achats) ne
-    // sont pas faites, la chaîne n'est pas terminée — même si BC/commande/
-    // livraison sont déjà tous verts. Ça évite de croire qu'une DA est
-    // "finie" alors qu'il reste cette dernière étape.
-    ['Confirmée', (da.confirmation_demandeur_le && da.confirmation_acheteur_le) ? da.confirmation_acheteur_le : null],
+    // Tant que le demandeur n'a pas confirmé la réception, la chaîne n'est
+    // pas terminée — même si BC/commande/livraison sont déjà tous verts.
+    // Ça évite de croire qu'une DA est "finie" alors qu'il reste cette
+    // dernière étape.
+    ['Confirmée', da.confirmation_demandeur_le],
   ]
   return (
     <div

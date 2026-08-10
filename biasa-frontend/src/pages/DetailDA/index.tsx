@@ -258,6 +258,11 @@ export default function DetailDAPage() {
   const peutValDaf  = utilisateur?.role === 'daf' && !estSaPropreDemande
   const estAcheteur = utilisateur?.role === 'acheteur' || utilisateur?.role === 'admin'
   const peutTraiter = estAcheteur || (serviceAutorise && utilisateur?.service === da.service_demandeur)
+  // Le demandeur simple suit la progression (BC créé / commande passée /
+  // livraison reçue) mais ne doit pas voir le détail chiffré de la commande
+  // (quantités et prix réellement négociés/commandés) — ces informations
+  // restent internes au circuit achats/validation.
+  const peutVoirDetailCommande = utilisateur?.role !== 'demandeur'
   // Messages "nouveaux" depuis la dernière visite, en excluant toujours ceux
   // qu'on a soi-même envoyés : un message qu'on vient d'écrire ne doit
   // jamais s'afficher comme "nouveau" à ses propres yeux.
@@ -633,7 +638,7 @@ export default function DetailDAPage() {
                       Traité par le Service Achats{serviceAutorise ? ' ou votre service (autorisé)' : ''}.
                     </div>
                   )}
-                  {da.commande_le && da.lignes_commande.length > 0 && (
+                  {peutVoirDetailCommande && da.commande_le && da.lignes_commande.length > 0 && (
                     <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
                       <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginBottom: 5, fontWeight: 500 }}>Ce qui a été réellement commandé</div>
                       {da.lignes_commande.map(l => (
@@ -655,26 +660,16 @@ export default function DetailDAPage() {
                 <div style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 14 }}>
                   <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 9, fontWeight: 500 }}>Confirmation de réception</div>
                   <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 10 }}>
-                    La demande passe au statut « Reçue » une fois que <b>le demandeur</b> et <b>le Service Achats</b> ont chacun confirmé avoir bien reçu la commande.
+                    La demande passe au statut « Reçue » dès que <b>le demandeur</b> confirme avoir bien reçu la commande.
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, marginBottom: 7 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, marginBottom: 10 }}>
                     <div style={{ width: 20, height: 20, borderRadius: '50%', background: da.confirmation_demandeur_le ? '#dbeefc' : 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11.5, color: da.confirmation_demandeur_le ? '#0B3C7A' : 'var(--text-secondary)', flexShrink: 0 }}>
-                      {da.confirmation_demandeur_le ? '✓' : '1'}
+                      {da.confirmation_demandeur_le ? '✓' : '•'}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13.5 }}>Confirmé par le demandeur</div>
                       {da.confirmation_demandeur_le && <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{fmt(da.confirmation_demandeur_le)}</div>}
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, marginBottom: 10 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: da.confirmation_acheteur_le ? '#dbeefc' : 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11.5, color: da.confirmation_acheteur_le ? '#0B3C7A' : 'var(--text-secondary)', flexShrink: 0 }}>
-                      {da.confirmation_acheteur_le ? '✓' : '2'}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13.5 }}>Confirmé par le Service Achats</div>
-                      {da.confirmation_acheteur_le && <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{fmt(da.confirmation_acheteur_le)}</div>}
                     </div>
                   </div>
 
@@ -693,15 +688,6 @@ export default function DetailDAPage() {
                     </div>
                   )}
 
-                  {estAcheteur && !da.confirmation_acheteur_le && da.livre_le && (
-                    <button
-                      disabled={al}
-                      onClick={() => act(() => demandesApi.confirmerReceptionAcheteur(da.id))}
-                      style={{ width: '100%', padding: '8px', fontSize: 13.5, border: 'none', borderRadius: 5, background: al ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: al ? 'not-allowed' : 'pointer', fontWeight: 500 }}
-                    >
-                      {al ? 'En cours…' : 'Confirmer la livraison au demandeur'}
-                    </button>
-                  )}
                 </div>
               )}
 
