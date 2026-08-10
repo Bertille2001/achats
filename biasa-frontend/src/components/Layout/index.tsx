@@ -168,7 +168,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       )}
 
       {/* SIDEBAR */}
-      <aside style={{
+      <aside className="no-print" style={{
         width: 200, minWidth: 200, background: 'var(--bg-primary)', borderRight: '1px solid #e3e9f1',
         display: 'flex', flexDirection: 'column',
         ...(estMobile ? {
@@ -226,7 +226,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             <>
               <div style={{ fontSize: 10.5, color: '#c4c4be', padding: '12px 10px 4px', letterSpacing: '0.8px', textTransform: 'uppercase' as const }}>Administration</div>
               <NavItem to="/admin" label="Tableau de bord" dot={dot} />
-              <NavItem to="/admin/toutes-da" label="Toutes les DA" dot={dot} />
+              <NavItem to="/admin/toutes-da" label="Toutes les DA / Rapports" dot={dot} />
               <NavItem to="/gestion-users" label="Utilisateurs" dot={dot} />
               <NavItem to="/parametres" label="Paramètres" dot={dot} />
               <NavItem to="/config-email" label="Config. email" dot={dot} />
@@ -276,7 +276,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       {/* CONTENT */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: estMobile ? '100%' : undefined }}>
         {/* Topbar */}
-        <div style={{ background: 'var(--bg-primary)', borderBottom: '1px solid var(--border)', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, gap: 10 }}>
+        <div className="no-print" style={{ background: 'var(--bg-primary)', borderBottom: '1px solid var(--border)', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
             {estMobile && (
               <button onClick={() => setMenuMobileOuvert(true)} aria-label="Ouvrir le menu" style={{ border: '1px solid var(--border)', borderRadius: 6, background: 'transparent', cursor: 'pointer', padding: '5px 9px', fontSize: 14.5, color: '#0B3C7A', flexShrink: 0 }}>Menu</button>

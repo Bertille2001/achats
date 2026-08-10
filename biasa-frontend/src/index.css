@@ -87,3 +87,12 @@ button:not(:disabled):hover { opacity: 0.88; }
 @media (max-width: 560px) {
   .grid-4, .grid-5, .grid-6 { grid-template-columns: 1fr !important; }
 }
+
+/* ── Impression (rapports) ──────────────────────── */
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  body { background: #fff; }
+  table { font-size: 11px !important; }
+  a { text-decoration: none; color: inherit; }
+}

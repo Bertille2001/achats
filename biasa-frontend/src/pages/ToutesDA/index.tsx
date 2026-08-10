@@ -28,6 +28,8 @@ const FILTRES_PERIODE: [string, string][] = [
   ['tout', 'Tout'], ['jour', "Aujourd'hui"], ['semaine', 'Cette semaine'], ['mois', 'Ce mois'], ['annee', 'Cette année'],
 ]
 
+const fmtMontant = (n: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' FCFA'
+
 export default function ToutesDaPage() {
   const navigate = useNavigate()
   const [demandes, setDemandes] = useState<DemandeAchat[]>([])
@@ -35,6 +37,9 @@ export default function ToutesDaPage() {
   const [filtre, setFiltre] = useState('')
   const [statut, setStatut] = useState('')
   const [periode, setPeriode] = useState('tout')
+  const [service, setService] = useState('')
+  const [dateDebut, setDateDebut] = useState('')
+  const [dateFin, setDateFin] = useState('')
 
   useEffect(() => {
     client.get<DemandeAchat[]>('/admin/toutes-les-da')
@@ -42,31 +47,71 @@ export default function ToutesDaPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  const services = Array.from(new Set(demandes.map(d => d.service_demandeur))).sort()
+
   const filtrees = demandes.filter(da => {
     const txt = `${da.numero} ${da.demandeur.prenom} ${da.demandeur.nom} ${da.service_demandeur}`.toLowerCase()
     const matchTxt = txt.includes(filtre.toLowerCase())
     const matchStatut = statut ? da.statut === statut : true
+    const matchService = service ? da.service_demandeur === service : true
     const matchPeriode = dansLaPeriode(da.date_demande, periode)
-    return matchTxt && matchStatut && matchPeriode
+    const d = new Date(da.date_demande)
+    const matchDebut = dateDebut ? d >= new Date(dateDebut) : true
+    const matchFin = dateFin ? d <= new Date(dateFin + 'T23:59:59') : true
+    return matchTxt && matchStatut && matchService && matchPeriode && matchDebut && matchFin
   })
+
+  const montantTotal = filtrees.reduce((s, da) => s + (da.montant_total_commande || 0), 0)
+  const dateImpression = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
 
   return (
     <>
-      <div style={{ padding: '11px 18px', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="no-print" style={{ padding: '11px 18px', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <div style={{ fontSize: 15.5, fontWeight: 500 }}>Toutes les demandes d'achat</div>
           <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 1 }}>{filtrees.length} demande(s), vision globale du circuit</div>
         </div>
+        <button
+          onClick={() => window.print()}
+          style={{ padding: '7px 16px', fontSize: 13.5, fontWeight: 600, border: 'none', borderRadius: 6, background: '#0B3C7A', color: '#fff', cursor: 'pointer' }}
+        >
+          Imprimer / Exporter PDF
+        </button>
       </div>
 
       <div style={{ padding: '16px 18px' }}>
+        {/* En-tête visible uniquement à l'impression */}
+        <div className="print-only" style={{ display: 'none', marginBottom: 16 }}>
+          <div style={{ fontSize: 19, fontWeight: 700, color: '#0B2C5C' }}>Clinique BIASA — Rapport des demandes d'achat</div>
+          <div style={{ fontSize: 12.5, color: '#4a617c', marginTop: 3 }}>
+            Édité le {dateImpression}
+            {periode !== 'tout' && ` · Période : ${FILTRES_PERIODE.find(([v]) => v === periode)?.[1]}`}
+            {dateDebut && ` · Du ${new Date(dateDebut).toLocaleDateString('fr-FR')}`}
+            {dateFin && ` au ${new Date(dateFin).toLocaleDateString('fr-FR')}`}
+            {service && ` · Service : ${service}`}
+            {statut && ` · Statut : ${STATUT_LABELS[statut as keyof typeof STATUT_LABELS]}`}
+          </div>
+        </div>
+
+        {/* Résumé */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' as const }}>
+          <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 16px', minWidth: 140 }}>
+            <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>Demandes</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0B2C5C' }}>{filtrees.length}</div>
+          </div>
+          <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 16px', minWidth: 200 }}>
+            <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>Montant total (commandé)</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0B2C5C' }}>{fmtMontant(montantTotal)}</div>
+          </div>
+        </div>
+
         {/* Filtres */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' as const, alignItems: 'center' }}>
+        <div className="no-print" style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' as const, alignItems: 'center' }}>
           <input
             placeholder="Rechercher N° DA, demandeur, service…"
             value={filtre}
             onChange={e => setFiltre(e.target.value)}
-            style={{ fontSize: 13.5, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)', outline: 'none', width: 240 }}
+            style={{ fontSize: 13.5, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)', outline: 'none', width: 220 }}
           />
           <select
             value={statut}
@@ -81,6 +126,17 @@ export default function ToutesDaPage() {
             <option value="rejetee">Rejetée</option>
             <option value="recue">Reçue</option>
           </select>
+          <select
+            value={service}
+            onChange={e => setService(e.target.value)}
+            style={{ fontSize: 13.5, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+          >
+            <option value="">Tous les services</option>
+            {services.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <input type="date" value={dateDebut} onChange={e => setDateDebut(e.target.value)} title="Du" style={{ fontSize: 13.5, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)' }} />
+          <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>au</span>
+          <input type="date" value={dateFin} onChange={e => setDateFin(e.target.value)} title="Au" style={{ fontSize: 13.5, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)' }} />
           <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' as const }}>
             {FILTRES_PERIODE.map(([v, l]) => (
               <button
@@ -107,8 +163,8 @@ export default function ToutesDaPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
                 <thead>
                   <tr style={{ background: 'var(--bg-secondary)' }}>
-                    {['N° DA','Date','Demandeur','Service','Type','Motif','Urgence','Statut','Fichiers',''].map(h => (
-                      <th key={h} style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-secondary)', textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
+                    {['N° DA','Date','Demandeur','Service','Type','Motif','Urgence','Statut','Montant','Fichiers',''].map(h => (
+                      <th key={h} className={h === '' ? 'no-print' : undefined} style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-secondary)', textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -128,8 +184,9 @@ export default function ToutesDaPage() {
                           {STATUT_LABELS[da.statut]}
                         </span>
                       </td>
+                      <td style={tdS}>{da.montant_total_commande ? fmtMontant(da.montant_total_commande) : '-'}</td>
                       <td style={tdS}>{da.fichiers.length > 0 ? `${da.fichiers.length} fichier(s)` : '-'}</td>
-                      <td style={tdS}>
+                      <td className="no-print" style={tdS}>
                         <button onClick={() => navigate(`/demandes/${da.id}`)} style={{ padding: '4px 8px', fontSize: 12.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>Voir</button>
                       </td>
                     </tr>
