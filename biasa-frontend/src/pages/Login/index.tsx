@@ -27,166 +27,135 @@ export default function LoginPage() {
   }
 
   const filigranes = [
-    { top: 60, left: 40, size: 90 },
-    { top: '20%', right: 60, size: 60 },
-    { bottom: 90, left: 90, size: 70 },
-    { bottom: '18%', right: 40, size: 50 },
-    { top: '50%', left: '55%', size: 55 },
-  ]
-
-  const atouts = [
-    'Traçabilité complète de chaque demande',
-    'Validation multi-niveaux sécurisée',
-    'Suivi des dépenses en temps réel',
+    { bottom: 20, right: 20, size: 80 },
+    { bottom: 140, right: 160, size: 60 },
+    { top: 30, left: 20, size: 70 },
+    { top: 200, right: 50, size: 55 },
+    { bottom: 220, left: 110, size: 65 },
+    { top: 100, left: 200, size: 50 },
+    { bottom: 60, left: 60, size: 55 },
   ]
 
   return (
-    <div className="biasa-login-wrap" style={{ fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif" }}>
-      <style>{`
-        html, body, #root { height: 100%; margin: 0; }
-        .biasa-login-wrap { display: flex; min-height: 100vh; }
-        .biasa-left {
-          flex: 1.1; position: relative; overflow: hidden; display: flex; flex-direction: column;
-          justify-content: center; padding: 60px 64px;
-          background: linear-gradient(155deg, #001B42 0%, #003580 55%, #0B5FC4 100%);
-        }
-        .biasa-right { flex: 1; display: flex; align-items: center; justify-content: center; background: #ffffff; padding: 40px 24px; }
-        @media (max-width: 860px) {
-          .biasa-login-wrap { flex-direction: column; }
-          .biasa-left { flex: none; padding: 40px 32px; min-height: 220px; }
-          .biasa-right { flex: none; }
-        }
-        @keyframes biasaFadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-        .biasa-fade { animation: biasaFadeUp 0.5s ease-out; }
-        .biasa-input { transition: border-color 0.15s, box-shadow 0.15s, background 0.15s; }
-        .biasa-input:focus { border-color: #003580 !important; background: #ffffff !important; box-shadow: 0 0 0 3px rgba(0,53,128,0.10); }
-        .biasa-submit { transition: transform 0.15s, box-shadow 0.15s, filter 0.15s; }
-        .biasa-submit:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,53,128,0.30); filter: brightness(1.05); }
-        .biasa-submit:not(:disabled):active { transform: translateY(0); }
-        .biasa-forgot { transition: opacity 0.15s; }
-        .biasa-forgot:hover { opacity: 0.7; }
-      `}</style>
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--bg-secondary)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Cercles décoratifs bleus */}
+      <div style={{ position: 'absolute', width: 500, height: 500, borderRadius: '50%', background: 'rgba(0,53,128,0.08)', top: -150, right: -150 }} />
+      <div style={{ position: 'absolute', width: 300, height: 300, borderRadius: '50%', background: 'rgba(0,53,128,0.06)', bottom: -80, left: 80 }} />
+      <div style={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', background: 'rgba(0,53,128,0.05)', top: 60, left: -60 }} />
 
-      {/* Panneau de marque */}
-      <div className="biasa-left">
-        <div style={{ position: 'absolute', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 70%)', top: -160, left: -140 }} />
-        <div style={{ position: 'absolute', width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(27,157,224,0.18) 0%, rgba(27,157,224,0) 70%)', bottom: -140, right: -100 }} />
+      {/* Filigranes logo — plusieurs petits */}
+      {filigranes.map((pos, i) => (
+        <img
+          key={i}
+          src="/logo_biasa.png"
+          alt=""
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            width: pos.size,
+            height: pos.size,
+            objectFit: 'contain',
+            opacity: 0.40,
+            pointerEvents: 'none',
+            top: (pos as any).top,
+            bottom: (pos as any).bottom,
+            left: (pos as any).left,
+            right: (pos as any).right,
+          }}
+        />
+      ))}
 
-        {filigranes.map((pos, i) => (
-          <img
-            key={i}
-            src="/logo_biasa.png"
-            alt=""
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              width: pos.size,
-              height: pos.size,
-              objectFit: 'contain',
-              opacity: 0.07,
-              filter: 'brightness(0) invert(1)',
-              pointerEvents: 'none',
-              top: (pos as any).top,
-              bottom: (pos as any).bottom,
-              left: (pos as any).left,
-              right: (pos as any).right,
-            }}
-          />
-        ))}
+      <div style={{ width: '100%', maxWidth: 400, zIndex: 1 }}>
+        <div style={{ background: 'var(--bg-primary)', borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
+          <div style={{ padding: '36px 28px 28px', position: 'relative', overflow: 'hidden' }}>
 
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 420 }} className="biasa-fade">
-          <div style={{ width: 68, height: 68, borderRadius: 16, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 28, boxShadow: '0 12px 28px rgba(0,0,0,0.18)' }}>
-            <img src="/logo_biasa.png" alt="Clinique BIASA" style={{ width: 46, height: 46, objectFit: 'contain' }} />
-          </div>
-
-          <div style={{ fontSize: 32, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.4px', lineHeight: 1.2, marginBottom: 10 }}>
-            Clinique BIASA
-          </div>
-          <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.72)', lineHeight: 1.5, marginBottom: 36 }}>
-            Système de gestion des achats
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {atouts.map((a, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 12, color: '#fff' }}>✓</div>
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)' }}>{a}</span>
+            <div style={{ marginBottom: 28, position: 'relative' }}>
+              <div style={{ fontSize: 23.5, fontWeight: 700, color: '#003580', marginBottom: 4, letterSpacing: '-0.4px' }}>
+                Clinique BIASA
               </div>
-            ))}
+              <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginBottom: 2 }}>
+                Système de gestion des achats
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <div style={{ fontSize: 16.5, fontWeight: 600, color: '#0B3C7A', marginBottom: 3 }}>Connexion</div>
+              <div style={{ fontSize: 13.5, color: 'var(--text-muted)' }}>Accédez à votre espace de gestion</div>
+            </div>
+
+            {erreur && (
+              <div style={{ padding: '9px 12px', marginBottom: 18, fontSize: 13.5, borderRadius: 8, color: 'var(--error-text)', background: 'var(--error-bg)', border: '1px solid var(--error-border)' }}>
+                {erreur}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.4px' }}>
+                  NOM D'UTILISATEUR
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  required
+                  placeholder="ex. bertille"
+                  style={{ width: '100%', padding: '11px 14px', fontSize: 14.5, border: '1px solid rgba(0,0,0,0.15)', borderRadius: 8, background: 'var(--bg-secondary)', color: '#0B3C7A', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
+                  onFocus={e => { e.target.style.borderColor = '#003580'; e.target.style.background = '#fff' }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(0,0,0,0.15)'; e.target.style.background = '#eaf2fb' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.4px' }}>
+                  MOT DE PASSE
+                </label>
+                <input
+                  type="password"
+                  value={mdp}
+                  onChange={e => setMdp(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  style={{ width: '100%', padding: '11px 14px', fontSize: 14.5, border: '1px solid rgba(0,0,0,0.15)', borderRadius: 8, background: 'var(--bg-secondary)', color: '#0B3C7A', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
+                  onFocus={e => { e.target.style.borderColor = '#003580'; e.target.style.background = '#fff' }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(0,0,0,0.15)'; e.target.style.background = '#eaf2fb' }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  width: '100%', padding: '13px',
+                  background: loading ? '#9ab4e8' : '#003580',
+                  color: '#fff', border: 'none', borderRadius: 8,
+                  fontSize: 15.5, fontWeight: 700,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  fontFamily: 'inherit',
+                  transition: 'background 0.15s',
+                }}
+              >
+                {loading ? 'Connexion…' : 'Se connecter →'}
+              </button>
+            </form>
+
+            <div style={{ marginTop: 16, textAlign: 'center' as const }}>
+              <Link to="/mot-de-passe-oublie" style={{ fontSize: 13.5, color: '#1B9DE0', textDecoration: 'none' }}>Mot de passe oublié ?</Link>
+            </div>
           </div>
         </div>
 
-        <div style={{ position: 'relative', zIndex: 1, marginTop: 48, fontSize: 12.5, color: 'rgba(255,255,255,0.5)' }}>
+        <div style={{ marginTop: 16, fontSize: 12.5, color: 'var(--text-muted)', textAlign: 'center' }}>
           Clinique BIASA © {new Date().getFullYear()} · Nous prenons soin de la vie
-        </div>
-      </div>
-
-      {/* Panneau de connexion */}
-      <div className="biasa-right">
-        <div style={{ width: '100%', maxWidth: 380 }} className="biasa-fade">
-          <div style={{ marginBottom: 30 }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#0B2C5C', marginBottom: 5 }}>Connexion</div>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Accédez à votre espace de gestion</div>
-          </div>
-
-          {erreur && (
-            <div style={{ padding: '10px 12px', marginBottom: 18, fontSize: 13.5, borderRadius: 8, color: 'var(--error-text)', background: 'var(--error-bg)', border: '1px solid var(--error-border)' }}>
-              {erreur}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 18 }}>
-              <label style={{ display: 'block', fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 7, letterSpacing: '0.5px' }}>
-                NOM D'UTILISATEUR
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                required
-                placeholder="ex. bertille"
-                className="biasa-input"
-                style={{ width: '100%', padding: '13px 15px', fontSize: 14.5, border: '1px solid rgba(15,40,80,0.16)', borderRadius: 10, background: '#f5f8fd', color: '#0B2C5C', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
-              />
-            </div>
-
-            <div style={{ marginBottom: 28 }}>
-              <label style={{ display: 'block', fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 7, letterSpacing: '0.5px' }}>
-                MOT DE PASSE
-              </label>
-              <input
-                type="password"
-                value={mdp}
-                onChange={e => setMdp(e.target.value)}
-                required
-                placeholder="••••••••"
-                className="biasa-input"
-                style={{ width: '100%', padding: '13px 15px', fontSize: 14.5, border: '1px solid rgba(15,40,80,0.16)', borderRadius: 10, background: '#f5f8fd', color: '#0B2C5C', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="biasa-submit"
-              style={{
-                width: '100%', padding: '14px',
-                background: loading ? '#9ab4e8' : 'linear-gradient(135deg, #003580 0%, #0B4FA8 100%)',
-                color: '#fff', border: 'none', borderRadius: 10,
-                fontSize: 15, fontWeight: 700,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                fontFamily: 'inherit',
-                boxShadow: loading ? 'none' : '0 6px 16px rgba(0,53,128,0.24)',
-              }}
-            >
-              {loading ? 'Connexion…' : 'Se connecter →'}
-            </button>
-          </form>
-
-          <div style={{ marginTop: 20, textAlign: 'center' as const }}>
-            <Link to="/mot-de-passe-oublie" className="biasa-forgot" style={{ fontSize: 13.5, color: '#1B6FE0', textDecoration: 'none', fontWeight: 500 }}>Mot de passe oublié ?</Link>
-          </div>
         </div>
       </div>
     </div>
