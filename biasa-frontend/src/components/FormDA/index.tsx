@@ -157,7 +157,7 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
           </div>
           <div style={foot}>
             <button onClick={() => setEtape('form')} style={{ padding: '8px 16px', fontSize: 13.5, border: '1px solid rgba(0,0,0,0.12)', borderRadius: 6, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>← Retour</button>
-            <button onClick={handleSubmit} disabled={loading} style={{ padding: '8px 20px', fontSize: 13.5, border: 'none', borderRadius: 6, background: loading ? '#9ab4e8' : '#1B9DE0', color: '#fff', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
+            <button onClick={handleSubmit} disabled={loading} style={{ padding: '8px 20px', fontSize: 13.5, border: 'none', borderRadius: 6, background: loading ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
               {loading ? 'Envoi…' : 'Confirmer et soumettre'}
             </button>
           </div>
@@ -176,8 +176,8 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
 
             <ST>Type de demande</ST>
             <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-              {(['medical', 'bien_service'] as TypeDA[]).map(t => (
-                <button key={t} onClick={() => set('type_da', t)} style={{ flex: 1, padding: 10, outline: form.type_da === t ? '2px solid #0B3C7A' : 'none', outlineOffset: form.type_da === t ? '-2px' : '0', borderRadius: 8, cursor: 'pointer', fontSize: 13.5, background: form.type_da === t ? '#1B9DE0' : '#eaf2fb', color: form.type_da === t ? '#fff' : '#5e6f85', fontWeight: form.type_da === t ? 600 : 400 }}>
+              {(['bien_service', 'medical'] as TypeDA[]).map(t => (
+                <button key={t} onClick={() => set('type_da', t)} style={{ flex: 1, padding: 10, outline: form.type_da === t ? '2px solid #0B3C7A' : 'none', outlineOffset: form.type_da === t ? '-2px' : '0', borderRadius: 8, cursor: 'pointer', fontSize: 13.5, background: form.type_da === t ? '#0B3C7A' : '#eaf2fb', color: form.type_da === t ? '#fff' : '#5e6f85', fontWeight: form.type_da === t ? 600 : 400 }}>
                   {t === 'medical' ? 'Médical & Consommables' : 'Bien / Service'}
                 </button>
               ))}
@@ -206,13 +206,13 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
               <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 6 }}>Motif <span style={{ color: '#c0392b' }}>*</span></div>
               <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' as const, marginBottom: 10 }}>
                 {([['reappro','Réapprovisionnement'],['nouveau_besoin','Nouveau besoin'],['commande_specifique','Cmd. spécifique'],['remplacement','Remplacement'],['activite_urgente','Activité urgente']] as [MotifDA,string][]).map(([v,l]) => (
-                  <button key={v} onClick={() => set('motif', v)} style={{ padding: '5px 10px', outline: form.motif === v ? '2px solid #0B3C7A' : 'none', outlineOffset: form.motif === v ? '-2px' : '0', borderRadius: 20, cursor: 'pointer', fontSize: 12.5, background: form.motif === v ? '#1B9DE0' : '#eaf2fb', color: form.motif === v ? '#fff' : '#5e6f85', fontWeight: form.motif === v ? 600 : 400 }}>{l}</button>
+                  <button key={v} onClick={() => set('motif', v)} style={{ padding: '5px 10px', outline: form.motif === v ? '2px solid #0B3C7A' : 'none', outlineOffset: form.motif === v ? '-2px' : '0', borderRadius: 20, cursor: 'pointer', fontSize: 12.5, background: form.motif === v ? '#0B3C7A' : '#eaf2fb', color: form.motif === v ? '#fff' : '#5e6f85', fontWeight: form.motif === v ? 600 : 400 }}>{l}</button>
                 ))}
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 6 }}>Urgence <span style={{ color: '#c0392b' }}>*</span></div>
               <div style={{ display: 'flex', gap: 5, marginBottom: 10 }}>
                 {([['haute','Haute (24h)'],['moyenne','Moyenne (48h)'],['faible','Faible (>72h)']] as [UrgenceDA,string][]).map(([v,l]) => (
-                  <button key={v} onClick={() => set('urgence', v)} style={{ flex: 1, padding: '7px', outline: form.urgence === v ? '2px solid #0B3C7A' : 'none', outlineOffset: form.urgence === v ? '-2px' : '0', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, background: form.urgence === v ? '#1B9DE0' : '#eaf2fb', color: form.urgence === v ? '#fff' : '#5e6f85', fontWeight: form.urgence === v ? 600 : 400 }}>{l}</button>
+                  <button key={v} onClick={() => set('urgence', v)} style={{ flex: 1, padding: '7px', outline: form.urgence === v ? '2px solid #0B3C7A' : 'none', outlineOffset: form.urgence === v ? '-2px' : '0', borderRadius: 8, cursor: 'pointer', fontSize: 12.5, background: form.urgence === v ? '#0B3C7A' : '#eaf2fb', color: form.urgence === v ? '#fff' : '#5e6f85', fontWeight: form.urgence === v ? 600 : 400 }}>{l}</button>
                 ))}
               </div>
               <FL label="Précisions / Contexte">
@@ -247,7 +247,7 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
                 </tbody>
               </table>
             </div>
-            <button onClick={ajouterLigne} style={{ fontSize: 12.5, color: '#1B9DE0', background: 'none', border: 'none', cursor: 'pointer', padding: '3px 0', marginBottom: 12 }}>+ Ajouter une ligne</button>
+            <button onClick={ajouterLigne} style={{ fontSize: 12.5, color: '#0B3C7A', background: 'none', border: 'none', cursor: 'pointer', padding: '3px 0', marginBottom: 12 }}>+ Ajouter une ligne</button>
             <datalist id="ac-designations">{designations.map(d => <option key={d} value={d} />)}</datalist>
             <datalist id="ac-unites">{unites.map(u => <option key={u} value={u} />)}</datalist>
 
@@ -310,7 +310,7 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
                 disabled={!formValide}
                 style={{
                   padding: '8px 20px', fontSize: 13.5, border: 'none', borderRadius: 6,
-                  background: formValide ? '#1B9DE0' : '#d4d4d0',
+                  background: formValide ? '#0B3C7A' : '#d4d4d0',
                   color: formValide ? '#fff' : '#8a96a3',
                   cursor: formValide ? 'pointer' : 'not-allowed',
                   fontWeight: 600,

@@ -137,7 +137,7 @@ export default function GestionUsersPage() {
           <div style={{ fontSize: 15.5, fontWeight: 500 }}>Gestion des utilisateurs</div>
           <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 1 }}>{users.length} compte(s) enregistré(s)</div>
         </div>
-        <button onClick={ouvrirCreation} style={{ padding: '6px 14px', background: '#1B9DE0', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13.5, fontWeight: 500, cursor: 'pointer' }}>
+        <button onClick={ouvrirCreation} style={{ padding: '6px 14px', background: '#0B3C7A', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13.5, fontWeight: 500, cursor: 'pointer' }}>
           + Nouvel utilisateur
         </button>
       </div>
@@ -253,7 +253,7 @@ export default function GestionUsersPage() {
 
             <div style={{ padding: '11px 16px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 7 }}>
               <button onClick={() => setShowModal(false)} style={{ padding: '6px 14px', fontSize: 13.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>Annuler</button>
-              <button onClick={sauvegarder} disabled={saving} style={{ padding: '6px 14px', fontSize: 13.5, border: 'none', borderRadius: 5, background: '#1B9DE0', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>
+              <button onClick={sauvegarder} disabled={saving} style={{ padding: '6px 14px', fontSize: 13.5, border: 'none', borderRadius: 5, background: '#0B3C7A', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>
                 {saving ? 'Enregistrement…' : 'Enregistrer'}
               </button>
             </div>

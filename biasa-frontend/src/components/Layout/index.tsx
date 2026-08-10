@@ -143,7 +143,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const dot = (active: boolean) => ({
     width: 5, height: 5, borderRadius: '50%',
-    background: active ? '#1B9DE0' : '#d4d4d0',
+    background: active ? '#0B3C7A' : '#d4d4d0',
     flexShrink: 0,
   } as React.CSSProperties)
 

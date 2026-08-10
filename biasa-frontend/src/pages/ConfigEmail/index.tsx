@@ -75,7 +75,7 @@ export default function ConfigEmailPage() {
                 <div style={{ display: 'flex', gap: 8 }}>
                   {[['STARTTLS', 'True', 'False'], ['SSL/TLS', 'False', 'True']].map(([label, tls, ssl]) => (
                     <button key={label} onClick={() => { set('MAIL_STARTTLS', tls); set('MAIL_SSL_TLS', ssl) }}
-                      style={{ flex: 1, padding: '6px', fontSize: 12.5, border: form.MAIL_STARTTLS === tls ? '1.5px solid #1B9DE0' : '1px solid var(--border)', borderRadius: 5, cursor: 'pointer', background: form.MAIL_STARTTLS === tls ? 'var(--bg-secondary)' : 'transparent', color: form.MAIL_STARTTLS === tls ? '#1B9DE0' : 'var(--text-secondary)', fontWeight: form.MAIL_STARTTLS === tls ? 500 : 400 }}>
+                      style={{ flex: 1, padding: '6px', fontSize: 12.5, border: form.MAIL_STARTTLS === tls ? '1.5px solid #0B3C7A' : '1px solid var(--border)', borderRadius: 5, cursor: 'pointer', background: form.MAIL_STARTTLS === tls ? 'var(--bg-secondary)' : 'transparent', color: form.MAIL_STARTTLS === tls ? '#0B3C7A' : 'var(--text-secondary)', fontWeight: form.MAIL_STARTTLS === tls ? 500 : 400 }}>
                       {label}
                     </button>
                   ))}
@@ -132,7 +132,7 @@ export default function ConfigEmailPage() {
           )}
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button onClick={sauvegarder} disabled={saving} style={{ padding: '8px 20px', fontSize: 13.5, border: 'none', borderRadius: 6, background: '#1B9DE0', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>
+            <button onClick={sauvegarder} disabled={saving} style={{ padding: '8px 20px', fontSize: 13.5, border: 'none', borderRadius: 6, background: '#0B3C7A', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>
               {saving ? 'Sauvegarde…' : 'Sauvegarder'}
             </button>
           </div>

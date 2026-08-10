@@ -90,7 +90,7 @@ export default function ToutesDaPage() {
                   padding: '6px 11px', fontSize: 12.5, borderRadius: 20, cursor: 'pointer',
                   outline: periode === v ? '2px solid #0B3C7A' : 'none',
                 outlineOffset: periode === v ? '-2px' : '0',
-                background: periode === v ? '#1B9DE0' : '#dde5ef',
+                background: periode === v ? '#0B3C7A' : '#dde5ef',
                 color: periode === v ? '#fff' : '#0B3C7A',
                 fontWeight: periode === v ? 700 : 500,
                 }}

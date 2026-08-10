@@ -48,7 +48,7 @@ export default function MotDePasseOubliePage() {
           )}
 
           <div style={{ marginTop: 18, textAlign: 'center' as const }}>
-            <Link to="/login" style={{ fontSize: 13.5, color: '#1B9DE0', textDecoration: 'none' }}>Retour à la connexion</Link>
+            <Link to="/login" style={{ fontSize: 13.5, color: '#0B3C7A', textDecoration: 'none' }}>Retour à la connexion</Link>
           </div>
         </div>
       </div>

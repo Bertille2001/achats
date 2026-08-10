@@ -36,7 +36,7 @@ const EVENEMENT_LABELS: Record<string, string> = {
 }
 
 const couleur = (e: string) => {
-  if (e === 'connexion_reussie' || e === 'deverrouillage') return '#1B9DE0'
+  if (e === 'connexion_reussie' || e === 'deverrouillage') return '#0B3C7A'
   if (e === 'connexion_echouee' || e === 'compte_verrouille' || e.includes('rejet')) return '#a32d2d'
   if (e.includes('validation') || e === 'confirmation_reception_demandeur' || e === 'confirmation_reception_acheteur') return '#1e8f5f'
   return '#5e6f85'
@@ -99,7 +99,7 @@ export default function JournalAuditPage() {
                 padding: '6px 11px', fontSize: 12.5, borderRadius: 20, cursor: 'pointer',
                 outline: periode === v ? '2px solid #0B3C7A' : 'none',
                   outlineOffset: periode === v ? '-2px' : '0',
-                  background: periode === v ? '#1B9DE0' : '#dde5ef',
+                  background: periode === v ? '#0B3C7A' : '#dde5ef',
                   color: periode === v ? '#fff' : '#0B3C7A',
                   fontWeight: periode === v ? 700 : 500,
               }}

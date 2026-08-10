@@ -88,17 +88,17 @@ export default function DashboardPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 18 }}>
           {(role === 'demandeur' || role === 'admin') && <>
             <Stat label="Total" value={mesDa.length} />
-            <Stat label="En cours de validation" value={enCours} color="#1B9DE0" />
-            <Stat label="En traitement" value={approuvees} color="#1B9DE0" />
+            <Stat label="En cours de validation" value={enCours} color="#0B3C7A" />
+            <Stat label="En traitement" value={approuvees} color="#0B3C7A" />
             <Stat label="Reçues" value={recues} color="#0B3C7A" />
           </>}
           {(role === 'responsable' || role === 'daf') && <>
-            <Stat label="À valider" value={aValider.length} color="#1B9DE0" />
+            <Stat label="À valider" value={aValider.length} color="#0B3C7A" />
             <Stat label="Urgentes" value={urgentes} color="#a32d2d" />
             <Stat label="Mes demandes" value={mesDa.length} />
           </>}
           {role === 'acheteur' && <>
-            <Stat label="DA approuvées" value={aValider.length} color="#1B9DE0" />
+            <Stat label="DA approuvées" value={aValider.length} color="#0B3C7A" />
             <Stat label="Mes demandes" value={mesDa.length} />
           </>}
         </div>
@@ -109,7 +109,7 @@ export default function DashboardPage() {
           <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
             <div style={{ padding: '11px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: 13.5, fontWeight: 500, color: '#0B3C7A' }}>Dernières demandes</div>
-              <button onClick={() => navigate('/mes-demandes')} style={{ fontSize: 12.5, color: '#1B9DE0', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Voir tout →</button>
+              <button onClick={() => navigate('/mes-demandes')} style={{ fontSize: 12.5, color: '#0B3C7A', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Voir tout →</button>
             </div>
             {mesDa.length === 0
               ? <div style={{ padding: '20px 14px', fontSize: 13.5, color: 'var(--text-muted)', textAlign: 'center' }}>Aucune demande</div>
@@ -151,7 +151,7 @@ export default function DashboardPage() {
                   <div style={{ fontSize: 13.5, fontWeight: 500, color: '#0B3C7A' }}>
                     {role === 'acheteur' ? 'DA approuvées' : 'En attente'}
                   </div>
-                  <button onClick={() => navigate('/a-valider')} style={{ fontSize: 12.5, color: '#1B9DE0', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Voir tout →</button>
+                  <button onClick={() => navigate('/a-valider')} style={{ fontSize: 12.5, color: '#0B3C7A', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Voir tout →</button>
                 </div>
                 {aValider.length === 0
                   ? <div style={{ padding: '20px 14px', fontSize: 13.5, color: 'var(--text-muted)', textAlign: 'center' }}>Aucune demande en attente</div>
@@ -175,7 +175,7 @@ export default function DashboardPage() {
               <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
                 <div style={{ padding: '11px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ fontSize: 13.5, fontWeight: 500, color: '#0B3C7A' }}>DA en attente</div>
-                  <button onClick={() => navigate('/a-valider')} style={{ fontSize: 12.5, color: '#1B9DE0', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Voir tout →</button>
+                  <button onClick={() => navigate('/a-valider')} style={{ fontSize: 12.5, color: '#0B3C7A', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Voir tout →</button>
                 </div>
                 {aValider.slice(0, 3).map(da => (
                   <div key={da.id} onClick={() => navigate(`/demandes/${da.id}`)} style={{ padding: '9px 14px', borderBottom: '1px solid #eaf2fb', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

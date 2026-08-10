@@ -358,7 +358,7 @@ export default function DetailDAPage() {
 
         {/* Bannière confirmation de réception — bien visible, en haut de page */}
         {(da.statut === 'approuvee' || da.statut === 'recue') && utilisateur?.id === da.demandeur.id && !da.confirmation_demandeur_le && (
-          <div style={{ background: 'var(--bg-secondary)', border: '1.5px solid #1B9DE0', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' as const }}>
+          <div style={{ background: 'var(--bg-secondary)', border: '1.5px solid #0B3C7A', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' as const }}>
             <div>
               <div style={{ fontSize: 14.5, fontWeight: 700, color: '#0B3C7A' }}>Avez-vous reçu votre commande ?</div>
               <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginTop: 2 }}>Confirmez la réception pour clôturer le suivi de cette demande.</div>
@@ -387,7 +387,7 @@ export default function DetailDAPage() {
                   style={{
                     padding: '9px 14px', fontSize: 13.5, cursor: 'pointer',
                     background: 'transparent', border: 'none',
-                    borderBottom: onglet === o.key ? '2px solid #1B9DE0' : '2px solid transparent',
+                    borderBottom: onglet === o.key ? '2px solid #0B3C7A' : '2px solid transparent',
                     color: onglet === o.key ? 'var(--text-primary)' : 'var(--text-secondary)',
                     fontWeight: onglet === o.key ? 600 : 400, marginBottom: -1,
                     transition: 'background 0.12s, color 0.12s',
@@ -451,7 +451,7 @@ export default function DetailDAPage() {
                   )}
                   {da.historique.map(h => (
                     <div key={h.id} style={{ display: 'flex', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: h.action.includes('rejet') ? '#a32d2d' : '#1B9DE0', marginTop: 3, flexShrink: 0 }} />
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: h.action.includes('rejet') ? '#a32d2d' : '#0B3C7A', marginTop: 3, flexShrink: 0 }} />
                       <div>
                         <div style={{ fontSize: 13.5, fontWeight: 500 }}>{h.utilisateur.prenom} {h.utilisateur.nom}</div>
                         <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 1 }}>{fmt(h.date_action)} · {ACTION_LABELS[h.action]}</div>
@@ -553,7 +553,7 @@ export default function DetailDAPage() {
                     <button
                       disabled={al}
                       onClick={() => act(() => demandesApi.validerResponsable(da.id, commentaire || undefined))}
-                      style={{ flex: 1, padding: '6px', fontSize: 13.5, border: 'none', borderRadius: 5, background: al ? '#9ab4e8' : '#1B9DE0', color: '#fff', cursor: al ? 'not-allowed' : 'pointer', fontWeight: 500 }}
+                      style={{ flex: 1, padding: '6px', fontSize: 13.5, border: 'none', borderRadius: 5, background: al ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: al ? 'not-allowed' : 'pointer', fontWeight: 500 }}
                     >
                       {al ? 'En cours…' : 'Valider'}
                     </button>
@@ -581,7 +581,7 @@ export default function DetailDAPage() {
                     <button
                       disabled={al}
                       onClick={() => act(() => demandesApi.validerDaf(da.id, commentaire || undefined))}
-                      style={{ flex: 1, padding: '6px', fontSize: 13.5, border: 'none', borderRadius: 5, background: al ? '#9ab4e8' : '#1B9DE0', color: '#fff', cursor: al ? 'not-allowed' : 'pointer', fontWeight: 500 }}
+                      style={{ flex: 1, padding: '6px', fontSize: 13.5, border: 'none', borderRadius: 5, background: al ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: al ? 'not-allowed' : 'pointer', fontWeight: 500 }}
                     >
                       {al ? 'En cours…' : 'Valider'}
                     </button>
@@ -622,7 +622,7 @@ export default function DetailDAPage() {
                         <button
                           disabled={al}
                           onClick={etape.action}
-                          style={{ padding: '3px 9px', fontSize: 11.5, border: 'none', borderRadius: 5, background: al ? '#9ab4e8' : '#1B9DE0', color: '#fff', cursor: al ? 'not-allowed' : 'pointer', fontWeight: 500, whiteSpace: 'nowrap' as const, flexShrink: 0 }}
+                          style={{ padding: '3px 9px', fontSize: 11.5, border: 'none', borderRadius: 5, background: al ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: al ? 'not-allowed' : 'pointer', fontWeight: 500, whiteSpace: 'nowrap' as const, flexShrink: 0 }}
                         >
                           Cocher
                         </button>
@@ -711,7 +711,7 @@ export default function DetailDAPage() {
           <div style={{ padding: '11px 14px', borderBottom: '1px solid var(--border)', fontSize: 13.5, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
             Discussion
             {da.messages.length > 0 && (
-              <span style={{ fontSize: 11, color: '#fff', background: '#1B9DE0', borderRadius: 10, padding: '1px 7px', fontWeight: 600 }}>{da.messages.length}</span>
+              <span style={{ fontSize: 11, color: '#fff', background: '#0B3C7A', borderRadius: 10, padding: '1px 7px', fontWeight: 600 }}>{da.messages.length}</span>
             )}
             {nbNouveauxMessages > 0 && (
               <span style={{ fontSize: 11, color: '#fff', background: '#c0392b', borderRadius: 10, padding: '1px 7px', fontWeight: 600 }}>
@@ -757,7 +757,7 @@ export default function DetailDAPage() {
               <button
                 disabled={envoiMessage || !messageTexte.trim()}
                 onClick={envoyerMessage}
-                style={{ padding: '0 18px', fontSize: 13.5, border: 'none', borderRadius: 6, background: (envoiMessage || !messageTexte.trim()) ? '#9ab4e8' : '#1B9DE0', color: '#fff', cursor: (envoiMessage || !messageTexte.trim()) ? 'not-allowed' : 'pointer', fontWeight: 600 }}
+                style={{ padding: '0 18px', fontSize: 13.5, border: 'none', borderRadius: 6, background: (envoiMessage || !messageTexte.trim()) ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: (envoiMessage || !messageTexte.trim()) ? 'not-allowed' : 'pointer', fontWeight: 600 }}
               >
                 {envoiMessage ? '…' : 'Envoyer'}
               </button>
@@ -806,7 +806,7 @@ export default function DetailDAPage() {
 
             <button
               onClick={() => setLignesCommande(ls => [...ls, { designation: '', quantite: 1, prix_unitaire: 0 }])}
-              style={{ fontSize: 12.5, color: '#1B9DE0', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', marginBottom: 10 }}
+              style={{ fontSize: 12.5, color: '#0B3C7A', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', marginBottom: 10 }}
             >+ Ajouter une ligne</button>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, color: '#0B3C7A', padding: '8px 0', borderTop: '1px solid var(--border)', marginBottom: 14 }}>

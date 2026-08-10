@@ -74,32 +74,29 @@ export default function LoginPage() {
         />
       ))}
 
-      <div style={{ width: '100%', maxWidth: 400, zIndex: 1 }}>
+      <div style={{ width: '100%', maxWidth: 350, zIndex: 1 }}>
         <div style={{ background: 'var(--bg-primary)', borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
-          <div style={{ padding: '36px 28px 28px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ padding: '30px 26px 24px', position: 'relative', overflow: 'hidden' }}>
 
-            <div style={{ marginBottom: 28, position: 'relative' }}>
-              <div style={{ fontSize: 23.5, fontWeight: 700, color: '#003580', marginBottom: 4, letterSpacing: '-0.4px' }}>
+            <div style={{ marginBottom: 20, textAlign: 'center' as const }}>
+              <div style={{ fontSize: 21, fontWeight: 700, color: '#003580', marginBottom: 3, letterSpacing: '-0.4px' }}>
                 Clinique BIASA
               </div>
-              <div style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginBottom: 2 }}>
+              <div style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>
                 Système de gestion des achats
               </div>
             </div>
 
-            <div style={{ marginBottom: 22 }}>
-              <div style={{ fontSize: 16.5, fontWeight: 600, color: '#0B3C7A', marginBottom: 3 }}>Connexion</div>
-              <div style={{ fontSize: 13.5, color: 'var(--text-muted)' }}>Accédez à votre espace de gestion</div>
-            </div>
+            <div style={{ height: 1, background: 'rgba(0,0,0,0.07)', marginBottom: 18 }} />
 
             {erreur && (
-              <div style={{ padding: '9px 12px', marginBottom: 18, fontSize: 13.5, borderRadius: 8, color: 'var(--error-text)', background: 'var(--error-bg)', border: '1px solid var(--error-border)' }}>
+              <div style={{ padding: '9px 12px', marginBottom: 16, fontSize: 13, borderRadius: 8, color: 'var(--error-text)', background: 'var(--error-bg)', border: '1px solid var(--error-border)' }}>
                 {erreur}
               </div>
             )}
 
             <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: 14 }}>
+              <div style={{ marginBottom: 12 }}>
                 <label style={{ display: 'block', fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.4px' }}>
                   NOM D'UTILISATEUR
                 </label>
@@ -109,13 +106,13 @@ export default function LoginPage() {
                   onChange={e => setUsername(e.target.value)}
                   required
                   placeholder="ex. bertille"
-                  style={{ width: '100%', padding: '11px 14px', fontSize: 14.5, border: '1px solid rgba(0,0,0,0.15)', borderRadius: 8, background: 'var(--bg-secondary)', color: '#0B3C7A', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
+                  style={{ width: '100%', padding: '10px 13px', fontSize: 14, border: '1px solid rgba(0,0,0,0.15)', borderRadius: 8, background: 'var(--bg-secondary)', color: '#0B3C7A', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
                   onFocus={e => { e.target.style.borderColor = '#003580'; e.target.style.background = '#fff' }}
                   onBlur={e => { e.target.style.borderColor = 'rgba(0,0,0,0.15)'; e.target.style.background = '#eaf2fb' }}
                 />
               </div>
 
-              <div style={{ marginBottom: 24 }}>
+              <div style={{ marginBottom: 18 }}>
                 <label style={{ display: 'block', fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.4px' }}>
                   MOT DE PASSE
                 </label>
@@ -125,7 +122,7 @@ export default function LoginPage() {
                   onChange={e => setMdp(e.target.value)}
                   required
                   placeholder="••••••••"
-                  style={{ width: '100%', padding: '11px 14px', fontSize: 14.5, border: '1px solid rgba(0,0,0,0.15)', borderRadius: 8, background: 'var(--bg-secondary)', color: '#0B3C7A', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
+                  style={{ width: '100%', padding: '10px 13px', fontSize: 14, border: '1px solid rgba(0,0,0,0.15)', borderRadius: 8, background: 'var(--bg-secondary)', color: '#0B3C7A', outline: 'none', boxSizing: 'border-box' as const, fontFamily: 'inherit' }}
                   onFocus={e => { e.target.style.borderColor = '#003580'; e.target.style.background = '#fff' }}
                   onBlur={e => { e.target.style.borderColor = 'rgba(0,0,0,0.15)'; e.target.style.background = '#eaf2fb' }}
                 />
@@ -135,7 +132,7 @@ export default function LoginPage() {
                 type="submit"
                 disabled={loading}
                 style={{
-                  width: '100%', padding: '13px',
+                  width: '100%', padding: '12px',
                   background: loading ? '#9ab4e8' : '#003580',
                   color: '#fff', border: 'none', borderRadius: 8,
                   fontSize: 15.5, fontWeight: 700,
@@ -149,7 +146,7 @@ export default function LoginPage() {
             </form>
 
             <div style={{ marginTop: 16, textAlign: 'center' as const }}>
-              <Link to="/mot-de-passe-oublie" style={{ fontSize: 13.5, color: '#1B9DE0', textDecoration: 'none' }}>Mot de passe oublié ?</Link>
+              <Link to="/mot-de-passe-oublie" style={{ fontSize: 13.5, color: '#0B3C7A', textDecoration: 'none' }}>Mot de passe oublié ?</Link>
             </div>
           </div>
         </div>

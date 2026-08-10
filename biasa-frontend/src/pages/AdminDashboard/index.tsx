@@ -253,7 +253,7 @@ export default function AdminDashboardPage() {
                     const max = Math.max(...(usageStats?.par_jour ?? []).map(j => j.connexions), 1)
                     return (usageStats?.par_jour ?? []).map(j => (
                       <div key={j.jour} title={`${j.jour} : ${j.connexions} connexion(s)`} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: '100%' }}>
-                        <div style={{ background: '#1B9DE0', borderRadius: '3px 3px 0 0', height: `${(j.connexions / max) * 100}%`, minHeight: j.connexions > 0 ? 3 : 0 }} />
+                        <div style={{ background: '#0B3C7A', borderRadius: '3px 3px 0 0', height: `${(j.connexions / max) * 100}%`, minHeight: j.connexions > 0 ? 3 : 0 }} />
                       </div>
                     ))
                   })()}

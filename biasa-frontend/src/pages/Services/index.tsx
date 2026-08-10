@@ -51,7 +51,7 @@ export default function ServicesPage() {
                       onClick={() => enCours ? null : basculer(s.nom, !s.peut_traiter_soi_meme)}
                       style={{
                         width: 38, height: 22, borderRadius: 12, position: 'relative' as const,
-                        background: s.peut_traiter_soi_meme ? '#1B9DE0' : '#d4d4d0',
+                        background: s.peut_traiter_soi_meme ? '#0B3C7A' : '#d4d4d0',
                         transition: 'background 0.15s', flexShrink: 0,
                         opacity: enCours === s.nom ? 0.6 : 1,
                       }}

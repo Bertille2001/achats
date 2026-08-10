@@ -3,7 +3,7 @@
 :root {
   /* Palette principale BIASA */
   --navy:       #0B3C7A;
-  --blue:       #1B9DE0;
+  --blue:       #0B3C7A;
   --blue-dark:  #003580;
 
   /* Fonds */
@@ -18,12 +18,12 @@
   --border-md:  rgba(11,60,122,0.22);
 
   /* Texte */
-  --text-primary:   #0B3C7A;
-  --text-secondary: #4a617c;
-  --text-muted:     #8a9ab0;
+  --text-primary:   #0B2C4F;
+  --text-secondary: #33465e;
+  --text-muted:     #647186;
 
   /* États */
-  --accent:     #1B9DE0;
+  --accent:     #0B3C7A;
   --error-bg:   #fdf0ef;
   --error-text: #991b1b;
   --error-border: #f5c2bc;
@@ -66,7 +66,7 @@ input, select, textarea {
 }
 input:focus, select:focus, textarea:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(27,157,224,0.12);
+  box-shadow: 0 0 0 3px rgba(11,60,122,0.14);
   background: #fff;
 }
 

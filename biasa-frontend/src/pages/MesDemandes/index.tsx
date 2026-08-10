@@ -113,7 +113,7 @@ export default function MesDemandesPage() {
               : demandes.length > 0 ? `${demandesFiltrees.length} / ${demandes.length} demande(s)` : 'Vous voyez uniquement vos demandes'}
           </div>
         </div>
-        <button onClick={() => setShowForm(true)} style={{ padding: '6px 14px', background: '#1B9DE0', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13.5, fontWeight: 500, cursor: 'pointer' }}>
+        <button onClick={() => setShowForm(true)} style={{ padding: '6px 14px', background: '#0B3C7A', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13.5, fontWeight: 500, cursor: 'pointer' }}>
           + Nouvelle demande
         </button>
       </div>
@@ -131,7 +131,7 @@ export default function MesDemandesPage() {
                 padding: '6px 11px', fontSize: 13.5, borderRadius: 20, cursor: 'pointer',
                 outline: filtrePeriode === v ? '2px solid #0B3C7A' : 'none',
                 outlineOffset: filtrePeriode === v ? '-2px' : '0',
-                background: filtrePeriode === v ? '#1B9DE0' : '#dde5ef',
+                background: filtrePeriode === v ? '#0B3C7A' : '#dde5ef',
                 color: filtrePeriode === v ? '#fff' : '#0B3C7A',
                 fontWeight: filtrePeriode === v ? 700 : 500,
               }}
@@ -139,7 +139,7 @@ export default function MesDemandesPage() {
           ))}
         </div>
         {(filtreStatut !== 'tous' || filtrePeriode !== 'tout') && (
-          <button onClick={() => { setFiltreStatut('tous'); setFiltrePeriode('tout'); setPage(1) }} style={{ fontSize: 12.5, color: '#1B9DE0', background: 'none', border: 'none', cursor: 'pointer' }}>Réinitialiser</button>
+          <button onClick={() => { setFiltreStatut('tous'); setFiltrePeriode('tout'); setPage(1) }} style={{ fontSize: 12.5, color: '#0B3C7A', background: 'none', border: 'none', cursor: 'pointer' }}>Réinitialiser</button>
         )}
       </div>
 
@@ -221,7 +221,7 @@ export default function MesDemandesPage() {
                           <button
                             key={p}
                             onClick={() => setPage(p)}
-                            style={{ padding: '4px 8px', fontSize: 12.5, border: '1px solid var(--border)', borderRadius: 5, background: p === page ? '#1B9DE0' : 'transparent', color: p === page ? '#fff' : 'var(--text-primary)', cursor: 'pointer', fontWeight: p === page ? 600 : 400 }}
+                            style={{ padding: '4px 8px', fontSize: 12.5, border: '1px solid var(--border)', borderRadius: 5, background: p === page ? '#0B3C7A' : 'transparent', color: p === page ? '#fff' : 'var(--text-primary)', cursor: 'pointer', fontWeight: p === page ? 600 : 400 }}
                           >{p}</button>
                         ))}
                         <button

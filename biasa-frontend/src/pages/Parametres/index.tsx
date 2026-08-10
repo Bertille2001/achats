@@ -61,7 +61,7 @@ export default function ParametresPage() {
               display: 'block', width: '100%', textAlign: 'left',
               padding: '10px 14px', fontSize: 13.5, cursor: 'pointer',
               background: categorie === c.key ? 'var(--bg-secondary)' : 'transparent',
-              border: 'none', borderLeft: categorie === c.key ? '2px solid #1B9DE0' : '2px solid transparent',
+              border: 'none', borderLeft: categorie === c.key ? '2px solid #0B3C7A' : '2px solid transparent',
               color: categorie === c.key ? 'var(--text-primary)' : 'var(--text-secondary)',
               fontWeight: categorie === c.key ? 500 : 400,
             }}>
@@ -80,7 +80,7 @@ export default function ParametresPage() {
               placeholder={`Ajouter une valeur pour "${CATEGORIES.find(c => c.key === categorie)?.label}"…`}
               style={{ flex: 1, fontSize: 13.5, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
             />
-            <button onClick={ajouter} style={{ padding: '7px 16px', fontSize: 13.5, border: 'none', borderRadius: 6, background: '#1B9DE0', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>
+            <button onClick={ajouter} style={{ padding: '7px 16px', fontSize: 13.5, border: 'none', borderRadius: 6, background: '#0B3C7A', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>
               Ajouter
             </button>
           </div>

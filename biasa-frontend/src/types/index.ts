@@ -23,7 +23,7 @@ export const URGENCE_LABELS: Record<UrgenceDA, string> = { haute: 'Haute (24h)',
 export const STATUT_LABELS: Record<StatutDA, string> = { brouillon: 'Brouillon', soumise: 'Soumise', att_responsable: 'Att. responsable', att_daf: 'Att. DAF', approuvee: 'Approuvée', rejetee: 'Rejetée', recue: 'Reçue' }
 export const STATUT_COLORS: Record<StatutDA, string> = {
   brouillon: '#8a96a3',        // gris — pas encore engagé
-  soumise: '#1B9DE0',          // bleu — en circuit
+  soumise: '#0B3C7A',          // bleu — en circuit
   att_responsable: '#d68910',  // ambre — attend une action
   att_daf: '#8e5cd9',          // violet — distingue de l'étape responsable
   approuvee: '#1e8f5f',        // vert — validé

@@ -37,7 +37,7 @@ export default function ReinitialiserMotDePassePage() {
       <div style={{ minHeight: '100vh', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <div style={{ background: 'var(--bg-primary)', borderRadius: 14, border: '1px solid rgba(0,0,0,0.06)', padding: '32px 28px', maxWidth: 400 }}>
           <div style={{ fontSize: 14.5, color: '#791f1f' }}>Lien de réinitialisation invalide.</div>
-          <Link to="/mot-de-passe-oublie" style={{ fontSize: 13.5, color: '#1B9DE0' }}>Faire une nouvelle demande</Link>
+          <Link to="/mot-de-passe-oublie" style={{ fontSize: 13.5, color: '#0B3C7A' }}>Faire une nouvelle demande</Link>
         </div>
       </div>
     )
