@@ -261,6 +261,8 @@ async def confirmer_reception_demandeur(db: AsyncSession, da_id: int, user: Util
         raise HTTPException(status_code=403, detail="Seul le demandeur d'origine peut confirmer la réception.")
     if da.statut not in (StatutDA.APPROUVEE, StatutDA.RECUE):
         raise HTTPException(status_code=400, detail="La demande doit être approuvée avant de pouvoir confirmer la réception.")
+    if da.livre_le is None:
+        raise HTTPException(status_code=400, detail="Le Service Achats doit d'abord marquer la livraison comme reçue avant que vous puissiez confirmer.")
     if da.confirmation_demandeur_le is not None:
         raise HTTPException(status_code=400, detail="Vous avez déjà confirmé la réception.")
     da.confirmation_demandeur_par_id = user.id
@@ -278,6 +280,8 @@ async def confirmer_reception_acheteur(db: AsyncSession, da_id: int, user: Utili
         raise HTTPException(status_code=403, detail="Réservé au gestionnaire achats.")
     if da.statut not in (StatutDA.APPROUVEE, StatutDA.RECUE):
         raise HTTPException(status_code=400, detail="La demande doit être approuvée avant de pouvoir confirmer la réception.")
+    if da.livre_le is None:
+        raise HTTPException(status_code=400, detail="La livraison doit d'abord être marquée comme reçue avant de confirmer.")
     if da.confirmation_acheteur_le is not None:
         raise HTTPException(status_code=400, detail="La réception a déjà été confirmée par les achats.")
     da.confirmation_acheteur_par_id = user.id

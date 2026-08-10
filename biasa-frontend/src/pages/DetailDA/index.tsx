@@ -357,7 +357,7 @@ export default function DetailDAPage() {
         </div>
 
         {/* Bannière confirmation de réception — bien visible, en haut de page */}
-        {(da.statut === 'approuvee' || da.statut === 'recue') && utilisateur?.id === da.demandeur.id && !da.confirmation_demandeur_le && (
+        {(da.statut === 'approuvee' || da.statut === 'recue') && utilisateur?.id === da.demandeur.id && !da.confirmation_demandeur_le && da.livre_le && (
           <div style={{ background: 'var(--bg-secondary)', border: '1.5px solid #0B3C7A', borderRadius: 10, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' as const }}>
             <div>
               <div style={{ fontSize: 14.5, fontWeight: 700, color: '#0B3C7A' }}>Avez-vous reçu votre commande ?</div>
@@ -678,7 +678,7 @@ export default function DetailDAPage() {
                     </div>
                   </div>
 
-                  {utilisateur?.id === da.demandeur.id && !da.confirmation_demandeur_le && (
+                  {utilisateur?.id === da.demandeur.id && !da.confirmation_demandeur_le && da.livre_le && (
                     <button
                       disabled={al}
                       onClick={() => act(() => demandesApi.confirmerReceptionDemandeur(da.id))}
@@ -687,8 +687,13 @@ export default function DetailDAPage() {
                       {al ? 'En cours…' : "J'ai reçu ma commande"}
                     </button>
                   )}
+                  {utilisateur?.id === da.demandeur.id && !da.confirmation_demandeur_le && !da.livre_le && (
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>
+                      Vous pourrez confirmer la réception une fois que le Service Achats aura marqué la livraison comme reçue.
+                    </div>
+                  )}
 
-                  {estAcheteur && !da.confirmation_acheteur_le && (
+                  {estAcheteur && !da.confirmation_acheteur_le && da.livre_le && (
                     <button
                       disabled={al}
                       onClick={() => act(() => demandesApi.confirmerReceptionAcheteur(da.id))}
