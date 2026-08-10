@@ -1,5 +1,6 @@
 # biasa/app/api/v1/endpoints/admin.py
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.db.session import get_db
@@ -55,14 +56,24 @@ async def stats(db: AsyncSession = Depends(get_db), _=Depends(admin_only)):
     }
 
 
+SEUIL_ARCHIVAGE_JOURS = 2 * 365
+
+
 @router.get("/toutes-les-da", response_model=list[DemandeAchatOut])
-async def toutes_les_da(db: AsyncSession = Depends(get_db), _=Depends(vision_globale)):
-    """Toutes les DA de tous les utilisateurs."""
-    result = await db.execute(
-        select(DemandeAchat)
-        .options(*da_service._load_options())
-        .order_by(DemandeAchat.date_demande.desc())
-    )
+async def toutes_les_da(
+    archives: bool = Query(False, description="Inclure aussi les DA de plus de 2 ans"),
+    db: AsyncSession = Depends(get_db),
+    _=Depends(vision_globale),
+):
+    """Toutes les DA de tous les utilisateurs. Par défaut, les DA de plus de
+    2 ans sont exclues (archivées) pour garder la page rapide au fil du
+    temps ; le paramètre archives=true les réaffiche à la demande."""
+    q = select(DemandeAchat).options(*da_service._load_options())
+    if not archives:
+        seuil = datetime.utcnow() - timedelta(days=SEUIL_ARCHIVAGE_JOURS)
+        q = q.where(DemandeAchat.date_demande >= seuil)
+    q = q.order_by(DemandeAchat.date_demande.desc())
+    result = await db.execute(q)
     return list(result.scalars().all())
 
 

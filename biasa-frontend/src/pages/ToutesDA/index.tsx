@@ -40,12 +40,17 @@ export default function ToutesDaPage() {
   const [service, setService] = useState('')
   const [dateDebut, setDateDebut] = useState('')
   const [dateFin, setDateFin] = useState('')
+  // Par défaut, les DA de plus de 2 ans ne sont pas chargées (archivées côté
+  // serveur) pour garder la page rapide ; ce bouton les redemande à la
+  // demande seulement.
+  const [avecArchives, setAvecArchives] = useState(false)
 
   useEffect(() => {
-    client.get<DemandeAchat[]>('/admin/toutes-les-da')
+    setLoading(true)
+    client.get<DemandeAchat[]>('/admin/toutes-les-da', { params: avecArchives ? { archives: true } : {} })
       .then(r => setDemandes(r.data))
       .finally(() => setLoading(false))
-  }, [])
+  }, [avecArchives])
 
   const services = Array.from(new Set(demandes.map(d => d.service_demandeur))).sort()
 
@@ -64,6 +69,34 @@ export default function ToutesDaPage() {
   const montantTotal = filtrees.reduce((s, da) => s + (da.montant_total_commande || 0), 0)
   const dateImpression = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
 
+  const exporterExcel = () => {
+    const echapper = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
+    const entetes = ['N° DA', 'Date', 'Demandeur', 'Service', 'Type', 'Motif', 'Urgence', 'Statut', 'Montant (FCFA)', 'Fichiers']
+    const lignes = filtrees.map(da => [
+      da.numero,
+      fmtD(da.date_demande),
+      `${da.demandeur.prenom} ${da.demandeur.nom}`,
+      da.service_demandeur,
+      da.type_da === 'medical' ? 'Médical' : 'Bien/Service',
+      MOTIF_LABELS[da.motif],
+      URGENCE_LABELS[da.urgence],
+      STATUT_LABELS[da.statut],
+      da.montant_total_commande || 0,
+      da.fichiers.length,
+    ])
+    // Point-virgule comme séparateur (Excel en français découpe mal les
+    // colonnes avec une simple virgule), BOM UTF-8 pour que les accents
+    // s'affichent correctement à l'ouverture.
+    const csv = [entetes, ...lignes].map(l => l.map(echapper).join(';')).join('\r\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `rapport_da_biasa_${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <>
       <div className="no-print" style={{ padding: '11px 18px', borderBottom: '1px solid var(--border)', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -71,12 +104,20 @@ export default function ToutesDaPage() {
           <div style={{ fontSize: 15.5, fontWeight: 500 }}>Toutes les demandes d'achat</div>
           <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 1 }}>{filtrees.length} demande(s), vision globale du circuit</div>
         </div>
-        <button
-          onClick={() => window.print()}
-          style={{ padding: '7px 16px', fontSize: 13.5, fontWeight: 600, border: 'none', borderRadius: 6, background: '#0B3C7A', color: '#fff', cursor: 'pointer' }}
-        >
-          Imprimer / Exporter PDF
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={exporterExcel}
+            style={{ padding: '7px 16px', fontSize: 13.5, fontWeight: 600, border: '1px solid #0B3C7A', borderRadius: 6, background: '#fff', color: '#0B3C7A', cursor: 'pointer' }}
+          >
+            Exporter Excel
+          </button>
+          <button
+            onClick={() => window.print()}
+            style={{ padding: '7px 16px', fontSize: 13.5, fontWeight: 600, border: 'none', borderRadius: 6, background: '#0B3C7A', color: '#fff', cursor: 'pointer' }}
+          >
+            Imprimer / Exporter PDF
+          </button>
+        </div>
       </div>
 
       <div style={{ padding: '16px 18px' }}>
@@ -153,6 +194,17 @@ export default function ToutesDaPage() {
               >{l}</button>
             ))}
           </div>
+          <button
+            onClick={() => setAvecArchives(v => !v)}
+            title="Les demandes de plus de 2 ans sont masquées par défaut pour garder la page rapide"
+            style={{
+              padding: '6px 11px', fontSize: 12.5, borderRadius: 20, cursor: 'pointer',
+              border: '1px solid ' + (avecArchives ? '#0B3C7A' : 'var(--border)'),
+              background: avecArchives ? '#0B3C7A' : 'transparent',
+              color: avecArchives ? '#fff' : 'var(--text-secondary)',
+              fontWeight: 500,
+            }}
+          >{avecArchives ? '✓ Archives incluses (+2 ans)' : 'Inclure les archives (+2 ans)'}</button>
         </div>
 
         <div className="print-card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>

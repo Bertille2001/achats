@@ -238,6 +238,25 @@ export default function DetailDAPage() {
     finally { setAl(false) }
   }
 
+  // Pièce jointe rattachée directement à une étape du traitement (bon de
+  // commande, facture...), utilisée comme preuve à "Commande passée" et
+  // "Livraison reçue". uploadFichier renvoie le fichier seul (pas la DA
+  // entière) : on l'ajoute donc à la liste déjà chargée en mémoire plutôt
+  // que de renvoyer une requête complète.
+  const [uploadEnCours, setUploadEnCours] = useState<string | null>(null)
+  const uploaderPreuve = async (etapeCle: string, file: File) => {
+    if (!da) return
+    setUploadEnCours(etapeCle)
+    try {
+      const f = await demandesApi.uploadFichier(da.id, file)
+      setDa({ ...da, fichiers: [...da.fichiers, f] })
+    } catch (e: any) {
+      alert(e.response?.data?.detail || "Erreur lors de l'envoi du fichier")
+    } finally {
+      setUploadEnCours(null)
+    }
+  }
+
   const rejeter = (fn: () => Promise<DemandeAchat>) => {
     if (commentaire.trim().length < 5) {
       alert('Un commentaire est obligatoire pour rejeter (minimum 5 caractères).')
@@ -597,7 +616,7 @@ export default function DetailDAPage() {
                 <div style={{ marginTop: 14, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
                   <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 500 }}>Traitement de la commande</div>
                   {[
-                    { label: 'Bon de commande créé', fait: da.bc_cree_le, action: () => act(() => demandesApi.marquerBcCree(da.id)), peut: peutTraiter && !da.bc_cree_le },
+                    { label: 'Bon de commande créé', fait: da.bc_cree_le, action: () => act(() => demandesApi.marquerBcCree(da.id)), peut: peutTraiter && !da.bc_cree_le, cle: 'bc' },
                     {
                       label: 'Commande passée au fournisseur',
                       fait: da.commande_le,
@@ -614,14 +633,33 @@ export default function DetailDAPage() {
                         setShowCommandeForm(true)
                       },
                       peut: peutTraiter && !!da.bc_cree_le && !da.commande_le,
+                      cle: 'commande',
                     },
-                    { label: 'Livraison reçue', fait: da.livre_le, action: () => act(() => demandesApi.marquerLivre(da.id)), peut: peutTraiter && !!da.commande_le && !da.livre_le },
+                    { label: 'Livraison reçue', fait: da.livre_le, action: () => act(() => demandesApi.marquerLivre(da.id)), peut: peutTraiter && !!da.commande_le && !da.livre_le, cle: 'livraison' },
                   ].map((etape, i, arr) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
                       <div style={{ width: 16, height: 16, borderRadius: '50%', background: etape.fait ? '#0B3C7A' : 'var(--bg-secondary)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9.5, color: etape.fait ? '#fff' : 'var(--text-secondary)', flexShrink: 0 }}>
                         {etape.fait ? '✓' : i + 1}
                       </div>
                       <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: etape.fait ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{etape.label}</div>
+                      {peutTraiter && (etape.cle === 'commande' || etape.cle === 'livraison') && (
+                        <label
+                          title="Joindre le bon de commande ou la facture comme preuve"
+                          style={{ padding: '3px 7px', fontSize: 12, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: uploadEnCours ? 'not-allowed' : 'pointer', color: 'var(--text-secondary)', flexShrink: 0, opacity: uploadEnCours === etape.cle ? 0.6 : 1 }}
+                        >
+                          {uploadEnCours === etape.cle ? '…' : '📎'}
+                          <input
+                            type="file"
+                            disabled={!!uploadEnCours}
+                            style={{ display: 'none' }}
+                            onChange={e => {
+                              const file = e.target.files?.[0]
+                              if (file) uploaderPreuve(etape.cle, file)
+                              e.target.value = ''
+                            }}
+                          />
+                        </label>
+                      )}
                       {etape.peut && (
                         <button
                           disabled={al}
@@ -633,6 +671,11 @@ export default function DetailDAPage() {
                       )}
                     </div>
                   ))}
+                  {peutTraiter && (
+                    <div style={{ fontSize: 10.5, color: 'var(--text-secondary)', marginTop: 6 }}>
+                      📎 = joindre le bon de commande ou la facture comme preuve (visible dans l'onglet Fichiers).
+                    </div>
+                  )}
                   {!peutTraiter && (
                     <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>
                       Traité par le Service Achats{serviceAutorise ? ' ou votre service (autorisé)' : ''}.

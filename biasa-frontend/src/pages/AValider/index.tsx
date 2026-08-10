@@ -83,12 +83,22 @@ export default function AValiderPage() {
   const [vues, setVues] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(true)
   const [periode, setPeriode] = useState('tout')
+  const [selection, setSelection] = useState<Set<number>>(new Set())
+  const [validationEnCours, setValidationEnCours] = useState(false)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const filtreStatut = searchParams.get('statut') // ex: 'approuvee' pour le lien "Réceptions"
 
   const estAcheteur = utilisateur?.role === 'acheteur' || utilisateur?.role === 'admin'
   const accesAutorise = utilisateur && utilisateur.role !== 'demandeur'
+
+  // Validation groupée : uniquement pertinente pour responsable/DAF, sur les
+  // DA qui attendent justement leur décision (pas de bulk pour l'acheteur,
+  // dont le traitement est un vrai suivi étape par étape, pas une simple
+  // validation).
+  const statutCible = utilisateur?.role === 'responsable' ? 'att_responsable'
+    : utilisateur?.role === 'daf' ? 'att_daf'
+    : null
 
   useEffect(() => {
     if (!accesAutorise) { setLoading(false); return }
@@ -125,6 +135,46 @@ export default function AValiderPage() {
   // le nombre corresponde à ce qu'on voit vraiment à l'écran.
   const nonVues = demandesFiltrees.filter(d => !vues.has(d.id)).length
 
+  const idsSelectionnables = statutCible
+    ? demandesFiltrees.filter(d => d.statut === statutCible).map(d => d.id)
+    : []
+  const toutSelectionne = idsSelectionnables.length > 0 && idsSelectionnables.every(id => selection.has(id))
+
+  const toggleSelection = (id: number) => {
+    setSelection(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  const toggleToutSelectionner = () => {
+    setSelection(prev => {
+      if (toutSelectionne) return new Set()
+      return new Set(idsSelectionnables)
+    })
+  }
+
+  const validerSelection = async () => {
+    if (selection.size === 0 || !statutCible) return
+    if (!window.confirm(`Valider ${selection.size} demande(s) sélectionnée(s) ?`)) return
+    setValidationEnCours(true)
+    const ids = [...selection]
+    const resultats = await Promise.allSettled(
+      ids.map(id => statutCible === 'att_responsable'
+        ? demandesApi.validerResponsable(id)
+        : demandesApi.validerDaf(id))
+    )
+    const echecs = resultats.filter(r => r.status === 'rejected').length
+    setValidationEnCours(false)
+    setSelection(new Set())
+    const d = await demandesApi.toutesDemandesAcheteur()
+    setDemandes(d)
+    if (echecs > 0) {
+      alert(`${ids.length - echecs} validée(s), ${echecs} en échec (statut déjà changé entre-temps ?).`)
+    }
+  }
+
   const titre = filtreStatut === 'receptions'
     ? 'Réceptions'
     : filtreStatut === 'rejetee'
@@ -147,14 +197,25 @@ export default function AValiderPage() {
           <div style={{ fontSize: 15.5, fontWeight: 500 }}>{titre}</div>
           <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 1 }}>{sousTitre}</div>
         </div>
-        {nonVues > 0 && (
-          <div style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>
-            <span style={{ background: '#c0392b', color: '#fff', fontSize: 11.5, fontWeight: 600, padding: '2px 8px', borderRadius: 10, marginRight: 6 }}>{nonVues}</span>
-            {filtreStatut === 'rejetee'
-              ? 'nouvelle(s) rejetée(s)'
-              : estAcheteur ? 'nouvelle(s) DA à traiter' : 'nouvelle(s) à valider'}
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {selection.size > 0 && (
+            <button
+              onClick={validerSelection}
+              disabled={validationEnCours}
+              style={{ padding: '7px 14px', fontSize: 13, fontWeight: 600, border: 'none', borderRadius: 6, background: '#1e8f5f', color: '#fff', cursor: validationEnCours ? 'default' : 'pointer', opacity: validationEnCours ? 0.7 : 1 }}
+            >
+              {validationEnCours ? 'Validation…' : `Valider la sélection (${selection.size})`}
+            </button>
+          )}
+          {nonVues > 0 && (
+            <div style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>
+              <span style={{ background: '#c0392b', color: '#fff', fontSize: 11.5, fontWeight: 600, padding: '2px 8px', borderRadius: 10, marginRight: 6 }}>{nonVues}</span>
+              {filtreStatut === 'rejetee'
+                ? 'nouvelle(s) rejetée(s)'
+                : estAcheteur ? 'nouvelle(s) DA à traiter' : 'nouvelle(s) à valider'}
+            </div>
+          )}
+        </div>
       </div>
 
       <div style={{ padding: '12px 18px 0', display: 'flex', gap: 5, flexWrap: 'wrap' as const }}>
@@ -187,6 +248,13 @@ export default function AValiderPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
               <thead>
                 <tr style={{ background: 'var(--bg-secondary)' }}>
+                  {statutCible && (
+                    <th style={{ padding: '8px 6px', borderBottom: '1px solid var(--border)', width: 20 }}>
+                      {idsSelectionnables.length > 0 && (
+                        <input type="checkbox" checked={toutSelectionne} onChange={toggleToutSelectionner} style={{ cursor: 'pointer' }} />
+                      )}
+                    </th>
+                  )}
                   {(estAcheteur
                     ? ['', 'N° DA', 'Date', 'Demandeur', 'Service', 'Type', 'Urgence', 'Statut', 'Traitement', '']
                     : ['', 'N° DA', 'Date', 'Demandeur', 'Service', 'Type', 'Urgence', 'Statut', '']
@@ -206,6 +274,13 @@ export default function AValiderPage() {
                       onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
                       onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
                     >
+                      {statutCible && (
+                        <td style={{ ...tdS, padding: '9px 6px' }} onClick={e => e.stopPropagation()}>
+                          {da.statut === statutCible && (
+                            <input type="checkbox" checked={selection.has(da.id)} onChange={() => toggleSelection(da.id)} style={{ cursor: 'pointer' }} />
+                          )}
+                        </td>
+                      )}
                       {/* Indicateur non lu */}
                       <td style={{ ...tdS, width: 8, padding: '9px 6px' }}>
                         {nonVue && (
