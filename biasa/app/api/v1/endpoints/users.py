@@ -67,6 +67,13 @@ async def modifier_user(
     for field, value in data.model_dump(exclude_none=True).items():
         if field == 'mot_de_passe':
             setattr(user, field, hash_password(value))
+            # L'admin vient de définir un mot de passe manuellement : la
+            # demande de réinitialisation (si elle existe) est résolue, on
+            # invalide le jeton pour qu'elle disparaisse de la liste "en
+            # attente" et qu'un éventuel lien envoyé par email ne soit plus
+            # utilisable.
+            user.jeton_reinitialisation = None
+            user.jeton_expire_le = None
         else:
             setattr(user, field, value)
 

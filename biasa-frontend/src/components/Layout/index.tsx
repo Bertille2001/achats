@@ -2,6 +2,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth'
 import { useEffect, useState, useCallback, type ReactNode } from 'react'
 import { demandesApi } from '../../api/demandes'
+import client from '../../api/client'
 import { etatNotifications, activerNotifications, desactiverNotifications, type EtatNotifications } from '../../notifications'
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -10,6 +11,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation()
   const [nbAValider, setNbAValider] = useState(0)
   const [nbMessages, setNbMessages] = useState(0)
+  const [nbMdpOublies, setNbMdpOublies] = useState(0)
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [largeurFenetre, setLargeurFenetre] = useState(window.innerWidth)
   const [menuMobileOuvert, setMenuMobileOuvert] = useState(false)
@@ -110,6 +112,11 @@ export default function Layout({ children }: { children: ReactNode }) {
       } else if (estValidateur) {
         const val = await demandesApi.aValider().catch(() => [])
         setNbAValider(val.length)
+      }
+
+      if (estAdmin) {
+        const en_attente = await client.get<any[]>('/admin/mdp-oublies-en-attente').catch(() => ({ data: [] }))
+        setNbMdpOublies(en_attente.data.length)
       }
     } catch { /* ignore */ }
   }, [role])
@@ -227,7 +234,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               <div style={{ fontSize: 10.5, color: '#c4c4be', padding: '12px 10px 4px', letterSpacing: '0.8px', textTransform: 'uppercase' as const }}>Administration</div>
               <NavItem to="/admin" label="Tableau de bord" dot={dot} />
               <NavItem to="/admin/toutes-da" label="Toutes les DA / Rapports" dot={dot} />
-              <NavItem to="/gestion-users" label="Utilisateurs" dot={dot} />
+              <NavItem to="/gestion-users" label="Utilisateurs" dot={dot} badge={nbMdpOublies > 0 ? nbMdpOublies : undefined} badgeCouleur="#c0392b" />
               <NavItem to="/parametres" label="Paramètres" dot={dot} />
               <NavItem to="/config-email" label="Config. email" dot={dot} />
               <NavItem to="/journal-audit" label="Journal d'audit" dot={dot} />

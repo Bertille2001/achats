@@ -100,6 +100,36 @@ async def dashboard_stats(db: AsyncSession = Depends(get_db), _=Depends(vision_g
     }
 
 
+@router.get("/mdp-oublies-en-attente")
+async def mdp_oublies_en_attente(db: AsyncSession = Depends(get_db), _=Depends(admin_only)):
+    """Utilisateurs ayant une demande de réinitialisation de mot de passe en
+    cours (jeton valide, pas encore utilisé) — vue directement dans l'appli,
+    utile quand tout le monde n'a pas d'email et qu'on ne peut donc pas
+    compter uniquement sur la notification par email pour prévenir l'admin."""
+    from datetime import datetime, timedelta
+
+    now = datetime.utcnow()
+    result = await db.execute(
+        select(Utilisateur).where(
+            Utilisateur.jeton_reinitialisation.isnot(None),
+            Utilisateur.jeton_expire_le.isnot(None),
+            Utilisateur.jeton_expire_le > now,
+        ).order_by(Utilisateur.jeton_expire_le.asc())
+    )
+    users = list(result.scalars().all())
+    return [
+        {
+            "id": u.id,
+            "nom": u.nom,
+            "prenom": u.prenom,
+            "username": u.username,
+            "service": u.service,
+            "demande_le": (u.jeton_expire_le - timedelta(hours=2)).isoformat(),
+        }
+        for u in users
+    ]
+
+
 @router.post("/users/{user_id}/deverrouiller")
 async def deverrouiller(user_id: int, db: AsyncSession = Depends(get_db), admin_user=Depends(admin_only)):
     from app.services.user_service import deverrouiller_compte

@@ -16,6 +16,24 @@ interface User {
   verrouille_jusqua: string | null
 }
 
+interface MdpOublie {
+  id: number
+  nom: string
+  prenom: string
+  username: string
+  service: string | null
+  demande_le: string
+}
+
+const fmtRelatif = (iso: string) => {
+  const heures = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 3600000))
+  if (heures < 1) return "il y a moins d'une heure"
+  if (heures === 1) return 'il y a 1 heure'
+  if (heures < 24) return `il y a ${heures} heures`
+  const jours = Math.round(heures / 24)
+  return jours === 1 ? 'il y a 1 jour' : `il y a ${jours} jours`
+}
+
 const ROLES: Role[] = ['demandeur', 'responsable', 'daf', 'acheteur', 'admin']
 const ROLE_LABELS: Record<Role, string> = {
   demandeur: 'Demandeur', responsable: 'Responsable', daf: 'DAF',
@@ -49,22 +67,27 @@ export default function GestionUsersPage() {
   const [recherche, setRecherche] = useState('')
   const [services, setServices] = useState<string[]>([])
   const [postes, setPostes] = useState<string[]>([])
+  const [mdpOublies, setMdpOublies] = useState<MdpOublie[]>([])
 
   const charger = async () => {
     setLoading(true)
     try {
-      const [u, s, p] = await Promise.all([
+      const [u, s, p, m] = await Promise.all([
         client.get<User[]>('/users/'),
         client.get<string[]>('/autocomplete/services'),
         client.get<string[]>('/autocomplete/postes'),
+        client.get<MdpOublie[]>('/admin/mdp-oublies-en-attente').catch(() => ({ data: [] as MdpOublie[] })),
       ])
       setUsers(u.data)
       setServices(s.data)
       setPostes(p.data)
+      setMdpOublies(m.data)
     } finally {
       setLoading(false)
     }
   }
+
+  const mdpOublieParUser = new Map(mdpOublies.map(m => [m.id, m]))
 
   useEffect(() => { charger() }, [])
 
@@ -143,6 +166,30 @@ export default function GestionUsersPage() {
       </div>
 
       <div style={{ padding: '16px 18px' }}>
+        {/* Demandes de mot de passe oublié en attente */}
+        {mdpOublies.length > 0 && (
+          <div style={{ marginBottom: 14, border: '1px solid #f0b8b3', background: '#fcebeb', borderRadius: 8, padding: '11px 14px' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: '#a32d2d', marginBottom: 6 }}>
+              ⏳ {mdpOublies.length} demande{mdpOublies.length > 1 ? 's' : ''} de mot de passe oublié en attente
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {mdpOublies.map(m => {
+                const u = users.find(x => x.id === m.id)
+                return (
+                  <div key={m.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5, color: '#7a2020' }}>
+                    <span><strong>{m.prenom} {m.nom}</strong> ({m.username}){m.service ? ` · ${m.service}` : ''} — {fmtRelatif(m.demande_le)}</span>
+                    {u && (
+                      <button onClick={() => ouvrirEdition(u)} style={{ padding: '3px 9px', fontSize: 12, border: '1px solid #d99', borderRadius: 5, background: '#fff', cursor: 'pointer', color: '#a32d2d', fontWeight: 500 }}>
+                        Réinitialiser
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Recherche */}
         <div style={{ marginBottom: 12 }}>
           <input
@@ -169,7 +216,12 @@ export default function GestionUsersPage() {
                 <tbody>
                   {filtres.map(u => (
                     <tr key={u.id} style={{ opacity: u.actif ? 1 : 0.5 }}>
-                      <td style={tdS}><span style={{ fontWeight: 500 }}>{u.prenom} {u.nom}</span></td>
+                      <td style={tdS}>
+                        <span style={{ fontWeight: 500 }}>{u.prenom} {u.nom}</span>
+                        {mdpOublieParUser.has(u.id) && (
+                          <span title="Mot de passe oublié en attente" style={{ marginLeft: 6, fontSize: 11 }}>⏳</span>
+                        )}
+                      </td>
                       <td style={tdS}>{u.username}</td>
                       <td style={tdS}>{u.service || '-'}</td>
                       <td style={tdS}>{u.poste || '-'}</td>
