@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException
-from app.models.models import Utilisateur, JournalAudit
+from app.models.models import Utilisateur, JournalAudit, RoleUtilisateur
 from app.schemas.schemas import UtilisateurCreate
 from app.core.security import hash_password, verify_password
 
@@ -19,6 +19,13 @@ async def get_user_by_id(db: AsyncSession, user_id: int) -> Utilisateur | None:
 async def get_user_by_username(db: AsyncSession, username: str) -> Utilisateur | None:
     result = await db.execute(select(Utilisateur).where(Utilisateur.username == username))
     return result.scalar_one_or_none()
+
+
+async def get_admins(db: AsyncSession) -> list[Utilisateur]:
+    result = await db.execute(
+        select(Utilisateur).where(Utilisateur.role == RoleUtilisateur.ADMIN, Utilisateur.actif == True)  # noqa: E712
+    )
+    return list(result.scalars().all())
 
 
 def _log(db: AsyncSession, evenement: str, *, user: Utilisateur | None = None, username_saisi: str | None = None, details: str | None = None):

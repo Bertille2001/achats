@@ -35,6 +35,21 @@ async def notifier_demandeur(email: str, numero_da: str, action: str, commentair
     await send_email(email, subject, body)
 
 
+async def notifier_admin_reinitialisation(email: str, username_demandeur: str, nom_complet: str, a_recu_lien: bool) -> None:
+    subject = f"[BIASA] Mot de passe oublié : {username_demandeur}"
+    suite = (
+        "Un lien de réinitialisation lui a aussi été envoyé par email."
+        if a_recu_lien else
+        "Il/elle ne possède pas d'email enregistré : merci de lui définir un nouveau mot de passe depuis <strong>Gestion des utilisateurs</strong>."
+    )
+    body = (
+        f"<p>Bonjour,</p>"
+        f"<p><strong>{nom_complet}</strong> (identifiant : {username_demandeur}) a demandé une réinitialisation de mot de passe.</p>"
+        f"<p>{suite}</p>"
+    )
+    await send_email(email, subject, body)
+
+
 async def notifier_reinitialisation(email: str, username: str, lien: str) -> None:
     subject = "[BIASA] Réinitialisation de votre mot de passe"
     body = (

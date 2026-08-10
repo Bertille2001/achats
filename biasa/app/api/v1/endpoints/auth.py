@@ -7,10 +7,11 @@ from app.schemas.schemas import (
     ChangePasswordRequest, ForgotPasswordRequest, ResetPasswordRequest,
 )
 from app.services.user_service import (
-    authenticate_user, create_user, get_user_by_username,
+    authenticate_user, create_user, get_user_by_username, get_admins,
     changer_mot_de_passe, demander_reinitialisation, reinitialiser_mot_de_passe,
 )
-from app.services.mail_service import notifier_reinitialisation
+from app.services.mail_service import notifier_reinitialisation, notifier_admin_reinitialisation
+from app.services.push_service import notifier_admin_mdp_oublie
 from app.core.security import create_access_token, get_current_user
 from app.models.models import RoleUtilisateur
 
@@ -58,6 +59,7 @@ async def forgot_password(data: ForgotPasswordRequest, db: AsyncSession = Depend
     # un email ou pas — on ne révèle jamais quels comptes existent.
     if resultat:
         user, jeton = resultat
+        a_recu_lien = bool(user.email)
         if user.email:
             lien = f"/reinitialiser-mot-de-passe?jeton={jeton}"
 
@@ -67,7 +69,26 @@ async def forgot_password(data: ForgotPasswordRequest, db: AsyncSession = Depend
                 except Exception:
                     pass
             asyncio.create_task(envoyer())
-    return {"message": "Si ce compte existe et possède un email enregistré, un lien de réinitialisation vient d'y être envoyé. Sinon, contactez un administrateur."}
+
+        # Dans tous les cas, on prévient les administrateurs (email + notification
+        # push) : l'appli est interne et beaucoup d'agents n'ont pas d'email
+        # configuré, donc l'admin doit pouvoir réinitialiser manuellement.
+        nom_complet = f"{user.prenom} {user.nom}".strip() or user.username
+        admins = await get_admins(db)
+        for admin in admins:
+            if admin.email:
+                async def envoyer_admin(email=admin.email):
+                    try:
+                        await notifier_admin_reinitialisation(email, user.username, nom_complet, a_recu_lien)
+                    except Exception:
+                        pass
+                asyncio.create_task(envoyer_admin())
+        try:
+            await notifier_admin_mdp_oublie(db, [a.id for a in admins], nom_complet, user.username)
+            await db.commit()
+        except Exception:
+            pass
+    return {"message": "Si ce compte existe, un administrateur a été prévenu et pourra vous aider à réinitialiser votre mot de passe. Un lien vous a aussi été envoyé par email si un email est enregistré sur votre compte."}
 
 
 @router.post("/reset-password", response_model=UtilisateurOut)

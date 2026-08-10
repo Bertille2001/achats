@@ -16,7 +16,7 @@ from app.models.models import AbonnementNotification
 logger = logging.getLogger(__name__)
 
 
-async def notifier_nouveau_message(db: AsyncSession, destinataires_ids: list[int], titre: str, corps: str, url: str) -> None:
+async def envoyer_notification_push(db: AsyncSession, destinataires_ids: list[int], titre: str, corps: str, url: str) -> None:
     if not settings.VAPID_PUBLIC_KEY or not destinataires_ids:
         return
     try:
@@ -58,3 +58,16 @@ async def notifier_nouveau_message(db: AsyncSession, destinataires_ids: list[int
             logger.exception("Erreur inattendue lors de l'envoi d'une notification push")
 
     await db.flush()
+
+
+async def notifier_nouveau_message(db: AsyncSession, destinataires_ids: list[int], titre: str, corps: str, url: str) -> None:
+    await envoyer_notification_push(db, destinataires_ids, titre, corps, url)
+
+
+async def notifier_admin_mdp_oublie(db: AsyncSession, admin_ids: list[int], nom_complet: str, username: str) -> None:
+    await envoyer_notification_push(
+        db, admin_ids,
+        "Mot de passe oublié",
+        f"{nom_complet} ({username}) a demandé une réinitialisation de mot de passe.",
+        "/gestion-users",
+    )
