@@ -26,6 +26,15 @@ export default function LoginPage() {
     }
   }
 
+  const filigranes = [
+    { top: 40, left: 60, size: 60 },
+    { top: 90, right: 100, size: 44 },
+    { bottom: 70, left: 120, size: 50 },
+    { bottom: 40, right: 60, size: 64 },
+    { top: '45%', left: 30, size: 40 },
+    { top: '38%', right: 40, size: 46 },
+  ]
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -54,7 +63,44 @@ export default function LoginPage() {
       <div style={{ position: 'absolute', width: 620, height: 620, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,53,128,0.10) 0%, rgba(0,53,128,0) 70%)', top: -220, right: -180 }} />
       <div style={{ position: 'absolute', width: 460, height: 460, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,53,128,0.07) 0%, rgba(0,53,128,0) 70%)', bottom: -180, left: -140 }} />
 
+      {/* Filigranes logo discrets */}
+      {filigranes.map((pos, i) => (
+        <img
+          key={i}
+          src="/logo_biasa.png"
+          alt=""
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            width: pos.size,
+            height: pos.size,
+            objectFit: 'contain',
+            opacity: 0.12,
+            pointerEvents: 'none',
+            top: (pos as any).top,
+            bottom: (pos as any).bottom,
+            left: (pos as any).left,
+            right: (pos as any).right,
+          }}
+        />
+      ))}
+
       <div style={{ width: '100%', maxWidth: 408, zIndex: 1 }} className="biasa-login-card">
+
+        <div style={{ textAlign: 'center' as const, marginBottom: 26 }}>
+          <img
+            src="/logo_biasa.png"
+            alt="Clinique BIASA"
+            style={{ width: 58, height: 58, objectFit: 'contain', marginBottom: 12 }}
+          />
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#0B2C5C', letterSpacing: '-0.3px', lineHeight: 1.15 }}>
+            Clinique BIASA
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>
+            Système de gestion des achats
+          </div>
+        </div>
+
         <div style={{
           background: '#ffffff',
           borderRadius: 18,
@@ -65,25 +111,7 @@ export default function LoginPage() {
           {/* Bandeau supérieur */}
           <div style={{ height: 5, background: 'linear-gradient(90deg, #003580 0%, #1B6FE0 55%, #1B9DE0 100%)' }} />
 
-          <div style={{ padding: '38px 34px 30px' }}>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 26 }}>
-              <img
-                src="/logo_biasa.png"
-                alt="Clinique BIASA"
-                style={{ width: 46, height: 46, objectFit: 'contain', flexShrink: 0 }}
-              />
-              <div>
-                <div style={{ fontSize: 21, fontWeight: 700, color: '#0B2C5C', letterSpacing: '-0.3px', lineHeight: 1.15 }}>
-                  Clinique BIASA
-                </div>
-                <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 2 }}>
-                  Système de gestion des achats
-                </div>
-              </div>
-            </div>
-
-            <div style={{ height: 1, background: 'rgba(15,40,80,0.08)', marginBottom: 24 }} />
+          <div style={{ padding: '32px 34px 30px' }}>
 
             <div style={{ marginBottom: 22 }}>
               <div style={{ fontSize: 17.5, fontWeight: 600, color: '#0B2C5C', marginBottom: 3 }}>Connexion</div>
