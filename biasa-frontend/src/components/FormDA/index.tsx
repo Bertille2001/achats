@@ -95,11 +95,13 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
 
   const formValide =
     form.service_demandeur.trim() !== '' &&
-    lignesValides.length > 0
+    lignesValides.length > 0 &&
+    (isMed || form.lieu_utilisation.trim() !== '')
 
   const erreurChamp = () => {
     if (!form.service_demandeur.trim()) return 'Service requis'
     if (lignesValides.length === 0) return 'Au moins un article avec désignation et quantité est requis'
+    if (!isMed && !form.lieu_utilisation.trim()) return "Lieu d'utilisation requis"
     return ''
   }
 
@@ -171,7 +173,7 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
           <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontSize: 15.5, fontWeight: 600, color: '#0B3C7A' }}>Nouvelle demande d'achat</div>
-              <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 2 }}>Le service et au moins un article (désignation + quantité) sont requis ; le reste est facultatif</div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 2 }}>Le service, au moins un article (désignation + quantité){!isMed && ' et le lieu d\'utilisation'} sont requis ; le reste est facultatif</div>
             </div>
             <button onClick={onClose} style={{ width: 28, height: 28, border: '1px solid rgba(0,0,0,0.12)', borderRadius: 6, background: 'transparent', cursor: 'pointer', fontSize: 17.5, color: 'var(--text-secondary)' }}>×</button>
           </div>
@@ -278,8 +280,8 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
 
             {!isMed && <>
               <ST>Lieu d'utilisation</ST>
-              <FL label="Service, salle, localisation" style={{ marginBottom: 12 }}>
-                <input value={form.lieu_utilisation} onChange={e => set('lieu_utilisation', e.target.value)} placeholder="Ex : Bloc opératoire" list="ac-lieux" style={inpStyle} />
+              <FL label="Service, salle, localisation" required style={{ marginBottom: 12 }}>
+                <input value={form.lieu_utilisation} onChange={e => set('lieu_utilisation', e.target.value)} placeholder="Ex : Bloc opératoire" list="ac-lieux" style={inpStyle} required />
                 <datalist id="ac-lieux">{lieux.map(l => <option key={l} value={l} />)}</datalist>
               </FL>
             </>}

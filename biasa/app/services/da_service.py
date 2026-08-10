@@ -10,7 +10,7 @@ import aiofiles
 
 from app.models.models import (
     DemandeAchat, LigneDA, FichierDA, HistoriqueValidation,
-    StatutDA, ActionHistorique, RoleUtilisateur, Utilisateur, Service, MessageDA, LigneCommande
+    StatutDA, ActionHistorique, RoleUtilisateur, Utilisateur, Service, MessageDA, LigneCommande, TypeDA
 )
 from app.schemas.schemas import DemandeAchatCreate
 from app.core.config import UPLOAD_PATH
@@ -93,6 +93,8 @@ async def demandes_a_valider(db: AsyncSession, user: Utilisateur) -> list[Demand
 
 
 async def creer_demande(db: AsyncSession, data: DemandeAchatCreate, user: Utilisateur) -> DemandeAchat:
+    if data.type_da == TypeDA.BIEN_SERVICE and not (data.lieu_utilisation or "").strip():
+        raise HTTPException(status_code=400, detail="Le lieu d'utilisation est requis pour une demande de type Bien / Service.")
     numero = await _generer_numero(db)
     da = DemandeAchat(
         numero=numero, demandeur_id=user.id,
@@ -542,6 +544,9 @@ async def modifier_demande(
     if data.fournisseur_suggere is not None: da.fournisseur_suggere = data.fournisseur_suggere
     if data.autres_specs is not None: da.autres_specs = data.autres_specs
     if data.lieu_utilisation is not None: da.lieu_utilisation = data.lieu_utilisation
+
+    if da.type_da == TypeDA.BIEN_SERVICE and not (da.lieu_utilisation or "").strip():
+        raise HTTPException(status_code=400, detail="Le lieu d'utilisation est requis pour une demande de type Bien / Service.")
 
     if data.lignes is not None:
         # Remplacer les lignes existantes
