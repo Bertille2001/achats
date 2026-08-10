@@ -155,29 +155,33 @@ export default function ToutesDaPage() {
           </div>
         </div>
 
-        <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+        <div className="print-card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
           {loading ? (
             <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-secondary)' }}>Chargement…</div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
+            <div className="print-table-wrap" style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
                 <thead>
                   <tr style={{ background: 'var(--bg-secondary)' }}>
-                    {['N° DA','Date','Demandeur','Service','Type','Motif','Urgence','Statut','Montant','Fichiers',''].map(h => (
-                      <th key={h} className={h === '' ? 'no-print' : undefined} style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-secondary)', textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
+                    {[
+                      ['N° DA', undefined], ['Date', undefined], ['Demandeur', undefined], ['Service', undefined],
+                      ['Type', 'no-print'], ['Motif', undefined], ['Urgence', 'no-print'], ['Statut', undefined],
+                      ['Montant', undefined], ['Fichiers', 'no-print'], ['', 'no-print'],
+                    ].map(([h, cls]) => (
+                      <th key={h} className={cls} style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-secondary)', textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {filtrees.map(da => (
                     <tr key={da.id} onClick={() => navigate(`/demandes/${da.id}`)} style={{ cursor: 'pointer' }}>
-                      <td style={{ ...tdS, fontWeight: 500 }}>{da.numero}<BadgeMessages da={da} /></td>
+                      <td style={{ ...tdS, fontWeight: 500 }}>{da.numero}<span className="no-print"><BadgeMessages da={da} /></span></td>
                       <td style={tdS}>{fmtD(da.date_demande)}</td>
                       <td style={tdS}>{da.demandeur.prenom} {da.demandeur.nom}</td>
                       <td style={tdS}>{da.service_demandeur}</td>
-                      <td style={tdS}>{da.type_da === 'medical' ? 'Médical' : 'Bien/Service'}</td>
+                      <td className="no-print" style={tdS}>{da.type_da === 'medical' ? 'Médical' : 'Bien/Service'}</td>
                       <td style={tdS}>{MOTIF_LABELS[da.motif]}</td>
-                      <td style={tdS}><span style={{ color: URGENCE_COLORS[da.urgence], fontWeight: 600 }}>{URGENCE_LABELS[da.urgence]}</span></td>
+                      <td className="no-print" style={tdS}><span style={{ color: URGENCE_COLORS[da.urgence], fontWeight: 600 }}>{URGENCE_LABELS[da.urgence]}</span></td>
                       <td style={tdS}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12.5, color: dotColor(da.statut), fontWeight: 600 }}>
                           <span style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor(da.statut) }} />
@@ -185,7 +189,7 @@ export default function ToutesDaPage() {
                         </span>
                       </td>
                       <td style={tdS}>{da.montant_total_commande ? fmtMontant(da.montant_total_commande) : '-'}</td>
-                      <td style={tdS}>{da.fichiers.length > 0 ? `${da.fichiers.length} fichier(s)` : '-'}</td>
+                      <td className="no-print" style={tdS}>{da.fichiers.length > 0 ? `${da.fichiers.length} fichier(s)` : '-'}</td>
                       <td className="no-print" style={tdS}>
                         <button onClick={() => navigate(`/demandes/${da.id}`)} style={{ padding: '4px 8px', fontSize: 12.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>Voir</button>
                       </td>
