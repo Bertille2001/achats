@@ -10,7 +10,7 @@ set -euo pipefail
 
 CONTAINER_NAME="biasa-postgres"
 DB_USER="biasa"
-DB_NAME="biasa"
+DB_NAME="biasa_db"
 BACKUP_DIR="/home/ubuntu/biasa-backups"
 RETENTION_JOURS=30
 
