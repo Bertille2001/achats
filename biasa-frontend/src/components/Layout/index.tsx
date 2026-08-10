@@ -1,9 +1,33 @@
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth'
-import { useEffect, useState, useCallback, type ReactNode } from 'react'
+import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
 import { demandesApi } from '../../api/demandes'
 import client from '../../api/client'
 import { etatNotifications, activerNotifications, desactiverNotifications, type EtatNotifications } from '../../notifications'
+
+const TITRE_BASE = 'Clinique BIASA - Achats'
+
+function jouerSonAlerte() {
+  try {
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext
+    const ctx = new Ctx()
+    const jouerNote = (freq: number, debut: number, duree: number) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = freq
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + debut)
+      gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + debut + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + debut + duree)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.start(ctx.currentTime + debut)
+      osc.stop(ctx.currentTime + debut + duree)
+    }
+    jouerNote(880, 0, 0.14)
+    jouerNote(1175, 0.15, 0.18)
+  } catch { /* audio indisponible, tant pis */ }
+}
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { utilisateur, logout } = useAuthStore()
@@ -17,6 +41,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [menuMobileOuvert, setMenuMobileOuvert] = useState(false)
   const [etatNotifs, setEtatNotifs] = useState<EtatNotifications>('inactives')
   const [chargementNotifs, setChargementNotifs] = useState(false)
+  const [sonActif, setSonActif] = useState(() => localStorage.getItem('biasa_son_alertes') !== 'false')
+  const premierChargementRef = useRef(true)
+  const totalPrecedentRef = useRef(0)
   const estMobile = largeurFenetre < 860
 
   useEffect(() => { etatNotifications().then(setEtatNotifs) }, [])
@@ -143,6 +170,28 @@ export default function Layout({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('biasa:refresh-badges', onRefresh)
   }, [charger])
 
+  // Titre d'onglet + son : permet de repérer une nouvelle alerte (DA à
+  // valider, message, mot de passe oublié) sans email ni notification
+  // système — il suffit de garder l'onglet BIASA ouvert en arrière-plan.
+  useEffect(() => {
+    const total = nbAValider + nbMessages + nbMdpOublies
+    document.title = total > 0 ? `(${total}) ${TITRE_BASE}` : TITRE_BASE
+    if (premierChargementRef.current) {
+      premierChargementRef.current = false
+    } else if (sonActif && total > totalPrecedentRef.current) {
+      jouerSonAlerte()
+    }
+    totalPrecedentRef.current = total
+  }, [nbAValider, nbMessages, nbMdpOublies, sonActif])
+
+  const basculerSon = () => {
+    setSonActif(actif => {
+      const nouveau = !actif
+      localStorage.setItem('biasa_son_alertes', String(nouveau))
+      return nouveau
+    })
+  }
+
   const initiales = utilisateur
     ? `${utilisateur.prenom?.[0] ?? ''}${utilisateur.nom?.[0] ?? ''}`.toUpperCase()
     : '?'
@@ -259,6 +308,19 @@ export default function Layout({ children }: { children: ReactNode }) {
               <div style={{ fontSize: 11.5, color: 'var(--text-muted)', textTransform: 'capitalize' as const }}>{utilisateur?.role}</div>
             </div>
           </div>
+          <button
+            onClick={basculerSon}
+            title={sonActif ? "Couper le son d'alerte (nouvelle DA, message...)" : "Activer le son d'alerte (nouvelle DA, message...)"}
+            style={{
+              width: '100%', padding: '5px 8px', fontSize: 12, fontWeight: 500, marginBottom: 6,
+              border: '1px solid var(--border)', borderRadius: 6,
+              background: sonActif ? '#eaf6ee' : 'transparent',
+              color: sonActif ? '#1e8f5f' : 'var(--text-secondary)',
+              cursor: 'pointer',
+            }}
+          >
+            {sonActif ? '🔊 Son des alertes activé' : '🔇 Son des alertes coupé'}
+          </button>
           {etatNotifs !== 'indisponibles' && (
             <button
               onClick={basculerNotifications}

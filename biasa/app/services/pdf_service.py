@@ -108,14 +108,6 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
     ))
     story.append(Spacer(1, 0.15*cm))
 
-    # 3. Objectif centré en italique
-    story.append(P(
-        'Objectif : formuler formellement une expression de besoin',
-        fontSize=8, textColor=colors.HexColor('#444444'),
-        alignment=TA_CENTER, fontName='Helvetica-Oblique'
-    ))
-    story.append(Spacer(1, 0.15*cm))
-
     # 4. Numéro DA centré
     story.append(P(
         f'N° {da.get("numero", "")}',
@@ -125,7 +117,7 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
     story.append(HRFlowable(width="100%", thickness=0.8, color=BLEU, spaceAfter=8))
 
     # ── 1. INFORMATIONS GÉNÉRALES ─────────────────────────────────────────
-    story.append(Pb('1.  Informations générales',
+    story.append(Pb('Informations générales',
         fontSize=9, textColor=BLEU, spaceBefore=2, spaceAfter=4))
     for label, val in [
         ('Date de la demande', da.get('date_demande', '')),
@@ -142,7 +134,7 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
     story.append(Spacer(1, 0.25*cm))
 
     # ── 2. JUSTIFICATION ─────────────────────────────────────────────────
-    story.append(Pb('2.  Justification du besoin',
+    story.append(Pb('Justification du besoin',
         fontSize=9, textColor=BLEU, spaceBefore=2, spaceAfter=4))
     motif = MOTIF_LABELS.get(da.get('motif', ''), da.get('motif', ''))
     urgence = URGENCE_LABELS.get(da.get('urgence', ''), da.get('urgence', ''))
@@ -163,7 +155,7 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
     story.append(Spacer(1, 0.25*cm))
 
     # ── 3. DESCRIPTION DU BESOIN ─────────────────────────────────────────
-    story.append(Pb('3.  Description du besoin',
+    story.append(Pb('Description du besoin',
         fontSize=9, textColor=BLEU, spaceBefore=2, spaceAfter=4))
     lignes = da.get('lignes', [])
 
@@ -188,11 +180,9 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
                 P(str(l.get('reference_marque', ''))),
                 P(str(l.get('observation', ''))),
             ])
-        for i in range(len(lignes) + 1, 11):
-            rows.append([P(str(i), alignment=TA_CENTER), '', '', '', '', '', ''])
         t = Table(rows,
                   colWidths=[0.6*cm, 4.2*cm, 1.4*cm, 1.8*cm, 1.9*cm, 2.7*cm, 3.4*cm],
-                  rowHeights=[0.9*cm] + [0.6*cm] * 10)
+                  rowHeights=[0.9*cm] + [0.6*cm] * min(len(lignes), 10))
     else:
         header = [
             Pb('N°', alignment=TA_CENTER),
@@ -212,11 +202,9 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
                 P(str(l.get('description_technique', ''))),
                 P(str(l.get('observation', ''))),
             ])
-        for i in range(len(lignes) + 1, 11):
-            rows.append([P(str(i), alignment=TA_CENTER), '', '', '', '', ''])
         t = Table(rows,
                   colWidths=[0.6*cm, 3.5*cm, 1.2*cm, 1.4*cm, 5.7*cm, 3.6*cm],
-                  rowHeights=[0.9*cm] + [0.6*cm] * 10)
+                  rowHeights=[0.9*cm] + [0.6*cm] * min(len(lignes), 10))
 
     base_tbl(t)
     story.append(t)
@@ -224,7 +212,7 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
 
     # ── 4. SPÉCIFICATIONS / LIEU ─────────────────────────────────────────
     if is_medical:
-        story.append(Pb('4.  Spécifications Techniques',
+        story.append(Pb('Spécifications Techniques',
             fontSize=9, textColor=BLEU, spaceBefore=2, spaceAfter=4))
         specs = []
         if da.get('normes_certifications'):
@@ -237,7 +225,7 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
             specs.append(f"• Autres spécifications : {da['autres_specs']}")
         txt = '\n'.join(specs) if specs else ' '
     else:
-        story.append(Pb('4.  Lieu d\'utilisation / d\'exécution',
+        story.append(Pb('Lieu d\'utilisation / d\'exécution',
             fontSize=9, textColor=BLEU, spaceBefore=2, spaceAfter=4))
         txt = da.get('lieu_utilisation', ' ')
 
@@ -252,7 +240,7 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
     story.append(Spacer(1, 0.25*cm))
 
     # ── 5. VALIDATION HIÉRARCHIQUE ────────────────────────────────────────
-    story.append(Pb('5.  Validation hiérarchique',
+    story.append(Pb('Validation hiérarchique',
         fontSize=9, textColor=BLEU, spaceBefore=2, spaceAfter=4))
     hist = da.get('historique', [])
     resp = get_hist(hist, 'validation_responsable', 'rejet_responsable')
@@ -266,15 +254,6 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
     vt = Table(vd, colWidths=[5*cm, 8*cm, 3*cm], rowHeights=[0.65*cm, 1.3*cm, 1.3*cm])
     base_tbl(vt)
     story.append(vt)
-
-    # ── PIED DE PAGE ──────────────────────────────────────────────────────
-    story.append(Spacer(1, 0.4*cm))
-    story.append(HRFlowable(width="100%", thickness=0.4, color=GRIS_BORD))
-    story.append(P(
-        f'Document généré le {datetime.now().strftime("%d/%m/%Y à %H:%M")} '
-        f'Clinique BIASA · {da.get("numero", "")}',
-        fontSize=7, textColor=colors.HexColor('#999999'), alignment=TA_CENTER
-    ))
 
     doc.build(story)
     return buffer.getvalue()
