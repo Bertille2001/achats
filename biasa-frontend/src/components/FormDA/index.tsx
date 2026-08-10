@@ -37,6 +37,10 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
       : formVide(utilisateur?.service || '', utilisateur?.poste || '')
   )
   const [fichiers, setFichiers] = useState<File[]>([])
+  const [detailsOuvert, setDetailsOuvert] = useState(Boolean(
+    valeurInitiale?.normes_certifications || valeurInitiale?.fournisseur_suggere ||
+    valeurInitiale?.autres_specs || valeurInitiale?.date_peremption_min
+  ))
   const [etape, setEtape] = useState<'form' | 'confirm'>('form')
   const [loading, setLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -193,12 +197,6 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
                 <input value={form.poste_fonction} onChange={e => set('poste_fonction', e.target.value)} list="ac-postes" style={inpStyle} placeholder="Ex : Infirmier chef" />
                 <datalist id="ac-postes">{postes.map(p => <option key={p} value={p} />)}</datalist>
               </FL>
-              <FL label="Nature">
-                <select value={form.nature} onChange={e => set('nature', e.target.value as any)} style={inpStyle}>
-                  <option value="achat">Achat</option>
-                  <option value="service">Service</option>
-                </select>
-              </FL>
             </div>
 
             <ST>Justification</ST>
@@ -252,23 +250,30 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
             <datalist id="ac-unites">{unites.map(u => <option key={u} value={u} />)}</datalist>
 
             {isMed && <>
-              <ST>Spécifications techniques</ST>
-              <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px', marginBottom: 4 }}>
-                <FL label="Normes / certifications">
-                  <input value={form.normes_certifications} onChange={e => set('normes_certifications', e.target.value)} placeholder="CE, FDA, ISO…" list="ac-normes" style={inpStyle} />
-                  <datalist id="ac-normes">{normes.map(n => <option key={n} value={n} />)}</datalist>
-                </FL>
-                <FL label="Date de réception souhaitée (au plus tard)">
-                  <input type="date" value={form.date_peremption_min} onChange={e => set('date_peremption_min', e.target.value)} style={inpStyle} />
-                </FL>
-                <FL label="Fournisseur suggéré" style={{ gridColumn: '1 / -1' }}>
-                  <input value={form.fournisseur_suggere} onChange={e => set('fournisseur_suggere', e.target.value)} placeholder="Nom du fournisseur" list="ac-fournisseurs" style={inpStyle} />
-                  <datalist id="ac-fournisseurs">{fournisseurs.map(f => <option key={f} value={f} />)}</datalist>
-                </FL>
-                <FL label="Autres précisions" style={{ gridColumn: '1 / -1' }}>
-                  <input value={form.autres_specs} onChange={e => set('autres_specs', e.target.value)} placeholder="Conditionnement, taille, couleur…" style={inpStyle} />
-                </FL>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, marginBottom: detailsOuvert ? 12 : 4 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '.5px', textTransform: 'uppercase' as const }}>Spécifications techniques (facultatif)</div>
+                <button type="button" onClick={() => setDetailsOuvert(o => !o)} style={{ fontSize: 12.5, color: '#0B3C7A', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500, padding: '2px 0' }}>
+                  {detailsOuvert ? 'Masquer −' : 'Plus de détails +'}
+                </button>
               </div>
+              {detailsOuvert && (
+                <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px', marginBottom: 4 }}>
+                  <FL label="Normes / certifications">
+                    <input value={form.normes_certifications} onChange={e => set('normes_certifications', e.target.value)} placeholder="CE, FDA, ISO…" list="ac-normes" style={inpStyle} />
+                    <datalist id="ac-normes">{normes.map(n => <option key={n} value={n} />)}</datalist>
+                  </FL>
+                  <FL label="Date de réception souhaitée (au plus tard)">
+                    <input type="date" value={form.date_peremption_min} onChange={e => set('date_peremption_min', e.target.value)} style={inpStyle} />
+                  </FL>
+                  <FL label="Fournisseur suggéré" style={{ gridColumn: '1 / -1' }}>
+                    <input value={form.fournisseur_suggere} onChange={e => set('fournisseur_suggere', e.target.value)} placeholder="Nom du fournisseur" list="ac-fournisseurs" style={inpStyle} />
+                    <datalist id="ac-fournisseurs">{fournisseurs.map(f => <option key={f} value={f} />)}</datalist>
+                  </FL>
+                  <FL label="Autres précisions" style={{ gridColumn: '1 / -1' }}>
+                    <input value={form.autres_specs} onChange={e => set('autres_specs', e.target.value)} placeholder="Conditionnement, taille, couleur…" style={inpStyle} />
+                  </FL>
+                </div>
+              )}
             </>}
 
             {!isMed && <>

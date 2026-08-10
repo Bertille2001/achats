@@ -400,7 +400,6 @@ export default function DetailDAPage() {
               {onglet === 'info' && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
                   <IF label="Type"      value={da.type_da === 'medical' ? 'Médical & Consommables' : 'Bien / Service'} />
-                  <IF label="Nature"    value={da.nature} />
                   <IF label="Motif"     value={MOTIF_LABELS[da.motif]} />
                   <IF label="Urgence"   value={URGENCE_LABELS[da.urgence]} />
                   {da.justification && <IF label="Justification" value={da.justification} full />}
