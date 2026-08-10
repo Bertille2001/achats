@@ -292,14 +292,20 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
             {nbMessages > 0 && (
-              <span style={{ fontSize: 12.5, color: '#fff', background: '#c0392b', borderRadius: 20, padding: '2px 10px', whiteSpace: 'nowrap' as const, fontWeight: 600 }}>
+              <button
+                onClick={() => navigate('/mes-demandes?vue=messagerie')}
+                style={{ fontSize: 12.5, color: '#fff', background: '#c0392b', borderRadius: 20, padding: '2px 10px', whiteSpace: 'nowrap' as const, fontWeight: 600, border: 'none', cursor: 'pointer' }}
+              >
                 {nbMessages} message{nbMessages > 1 ? 's' : ''} non lu{nbMessages > 1 ? 's' : ''}
-              </span>
+              </button>
             )}
             {nbAValider > 0 && (
-              <span style={{ fontSize: 12.5, color: '#a32d2d', background: '#fcebeb', border: '1px solid #f09595', borderRadius: 20, padding: '2px 8px', whiteSpace: 'nowrap' as const }}>
+              <button
+                onClick={() => navigate('/a-valider')}
+                style={{ fontSize: 12.5, color: '#a32d2d', background: '#fcebeb', border: '1px solid #f09595', borderRadius: 20, padding: '2px 8px', whiteSpace: 'nowrap' as const, cursor: 'pointer' }}
+              >
                 {nbAValider} en attente
-              </span>
+              </button>
             )}
             <span className="hide-mobile" style={{ fontSize: 13.5, color: '#0B3C7A', fontWeight: 500, whiteSpace: 'nowrap' as const }}>{utilisateur?.prenom} {utilisateur?.nom}</span>
           </div>
