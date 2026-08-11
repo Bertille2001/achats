@@ -38,6 +38,16 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Presque tous les textes de l'appli sont en taille fixe (px) posée
+     directement dans le code de chaque page, pas en variables CSS — les
+     changer un par un serait énorme. On agrandit donc tout l'affichage
+     uniformément avec zoom plutôt que de tout réécrire : textes, boutons,
+     icônes et espacements grossissent ensemble, en gardant les mêmes
+     proportions. */
+  zoom: 1.12;
+}
+@media print {
+  body { zoom: 1; }
 }
 
 /* ── Boutons — reset complet pour écraser le style navigateur ─── */
