@@ -275,3 +275,34 @@ class AbonnementNotification(Base):
     cree_le: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     utilisateur: Mapped["Utilisateur"] = relationship()
+
+
+class SortiePharmacie(Base):
+    """Un retrait de produits fait par un service à la pharmacie de la
+    clinique. Volontairement simple (pas de circuit de validation, pas de
+    suivi du stock disponible) : ça sert juste à savoir qui a pris quoi,
+    quand, pour analyser la consommation par service — pas à gérer
+    l'inventaire de la pharmacie."""
+    __tablename__ = "sorties_pharmacie"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    date_sortie: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    service: Mapped[str] = mapped_column(String(100))
+    commentaire: Mapped[str | None] = mapped_column(Text, nullable=True)
+    enregistre_par_id: Mapped[int] = mapped_column(ForeignKey("utilisateurs.id"))
+    cree_le: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    enregistre_par: Mapped["Utilisateur"] = relationship()
+    lignes: Mapped[list["LigneSortiePharmacie"]] = relationship(back_populates="sortie", cascade="all, delete-orphan")
+
+
+class LigneSortiePharmacie(Base):
+    __tablename__ = "lignes_sortie_pharmacie"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    sortie_id: Mapped[int] = mapped_column(ForeignKey("sorties_pharmacie.id", ondelete="CASCADE"))
+    produit: Mapped[str] = mapped_column(String(200))
+    quantite: Mapped[int] = mapped_column(Integer)
+    unite: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    sortie: Mapped["SortiePharmacie"] = relationship(back_populates="lignes")

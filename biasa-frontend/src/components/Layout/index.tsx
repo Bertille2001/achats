@@ -278,6 +278,8 @@ export default function Layout({ children }: { children: ReactNode }) {
             </>
           )}
 
+          {estAcheteur && <NavItem to="/pharmacie" label="Pharmacie" dot={dot} />}
+
           {estValidateur && <NavItem to="/historique-validations" label="Historique" dot={dot} />}
 
           {estAdmin && (

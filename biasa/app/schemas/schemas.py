@@ -226,7 +226,41 @@ class DemandeAchatOut(BaseModel):
 
 class ValidationRequest(BaseModel):
     commentaire: Optional[str] = None
+    # Redemandé au moment précis de valider (pas juste être connecté) : ça
+    # prouve que c'est bien la personne qui décide, pas quelqu'un resté
+    # connecté sur son poste pendant sa pause.
+    mot_de_passe: str = Field(min_length=1)
 
 
 class RejetRequest(BaseModel):
     commentaire: str = Field(min_length=5)
+    mot_de_passe: str = Field(min_length=1)
+
+
+class LigneSortiePharmacieCreate(BaseModel):
+    produit: str = Field(min_length=1, max_length=200)
+    quantite: int = Field(gt=0)
+    unite: Optional[str] = None
+
+
+class LigneSortiePharmacieOut(LigneSortiePharmacieCreate):
+    id: int
+    model_config = {"from_attributes": True}
+
+
+class SortiePharmacieCreate(BaseModel):
+    date_sortie: Optional[datetime] = None  # si absent, on prend maintenant
+    service: str = Field(min_length=1, max_length=100)
+    commentaire: Optional[str] = None
+    lignes: list[LigneSortiePharmacieCreate] = Field(min_length=1)
+
+
+class SortiePharmacieOut(BaseModel):
+    id: int
+    date_sortie: datetime
+    service: str
+    commentaire: Optional[str] = None
+    cree_le: datetime
+    enregistre_par: UtilisateurOut
+    lignes: list[LigneSortiePharmacieOut] = []
+    model_config = {"from_attributes": True}
