@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import client from '../../api/client'
 import { afficherAlerte, demanderConfirmation } from '../../store/modal'
 
-type Role = 'demandeur' | 'responsable' | 'daf' | 'acheteur' | 'admin'
+type Role = 'demandeur' | 'responsable' | 'daf' | 'acheteur' | 'admin' | 'pharmacien'
 
 interface User {
   id: number
@@ -35,10 +35,10 @@ const fmtRelatif = (iso: string) => {
   return jours === 1 ? 'il y a 1 jour' : `il y a ${jours} jours`
 }
 
-const ROLES: Role[] = ['demandeur', 'responsable', 'daf', 'acheteur', 'admin']
+const ROLES: Role[] = ['demandeur', 'responsable', 'daf', 'acheteur', 'pharmacien', 'admin']
 const ROLE_LABELS: Record<Role, string> = {
   demandeur: 'Demandeur', responsable: 'Responsable', daf: 'DAF',
-  acheteur: 'Acheteur', admin: 'Admin',
+  acheteur: 'Acheteur', pharmacien: 'Pharmacien', admin: 'Admin',
 }
 
 const tdS: React.CSSProperties = {

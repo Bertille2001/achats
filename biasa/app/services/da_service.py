@@ -14,7 +14,16 @@ from app.models.models import (
 )
 from app.schemas.schemas import DemandeAchatCreate
 from app.core.config import UPLOAD_PATH
+from app.core.security import verify_password
 from app.services.mail_service import notifier_validateur, notifier_demandeur
+
+
+def _verifier_mot_de_passe(user: Utilisateur, mot_de_passe: str) -> None:
+    # Redemandé au moment précis de valider/rejeter (pas juste être connecté)
+    # pour confirmer que c'est bien la personne derrière le clavier, pas
+    # quelqu'un resté connecté sur un poste partagé ou laissé sans verrouillage.
+    if not verify_password(mot_de_passe, user.mot_de_passe):
+        raise HTTPException(status_code=401, detail="Mot de passe incorrect.")
 
 
 async def _generer_numero(db: AsyncSession) -> str:
@@ -154,7 +163,8 @@ async def soumettre_demande(db: AsyncSession, da_id: int, user: Utilisateur) -> 
     return await _get_da_or_404(db, da_id)
 
 
-async def valider_responsable(db: AsyncSession, da_id: int, user: Utilisateur, commentaire: str | None) -> DemandeAchat:
+async def valider_responsable(db: AsyncSession, da_id: int, user: Utilisateur, commentaire: str | None, mot_de_passe: str) -> DemandeAchat:
+    _verifier_mot_de_passe(user, mot_de_passe)
     da = await _get_da_or_404(db, da_id)
     _verifier_role(user, RoleUtilisateur.RESPONSABLE)
     _interdire_auto_validation(da, user)
@@ -187,7 +197,8 @@ async def valider_responsable(db: AsyncSession, da_id: int, user: Utilisateur, c
     return await _get_da_or_404(db, da_id)
 
 
-async def rejeter_responsable(db: AsyncSession, da_id: int, user: Utilisateur, commentaire: str) -> DemandeAchat:
+async def rejeter_responsable(db: AsyncSession, da_id: int, user: Utilisateur, commentaire: str, mot_de_passe: str) -> DemandeAchat:
+    _verifier_mot_de_passe(user, mot_de_passe)
     da = await _get_da_or_404(db, da_id)
     _verifier_role(user, RoleUtilisateur.RESPONSABLE)
     _interdire_auto_validation(da, user)
@@ -210,7 +221,8 @@ async def rejeter_responsable(db: AsyncSession, da_id: int, user: Utilisateur, c
     return await _get_da_or_404(db, da_id)
 
 
-async def valider_daf(db: AsyncSession, da_id: int, user: Utilisateur, commentaire: str | None) -> DemandeAchat:
+async def valider_daf(db: AsyncSession, da_id: int, user: Utilisateur, commentaire: str | None, mot_de_passe: str) -> DemandeAchat:
+    _verifier_mot_de_passe(user, mot_de_passe)
     da = await _get_da_or_404(db, da_id)
     _verifier_role(user, RoleUtilisateur.DAF)
     _interdire_auto_validation(da, user)
@@ -234,7 +246,8 @@ async def valider_daf(db: AsyncSession, da_id: int, user: Utilisateur, commentai
     return await _get_da_or_404(db, da_id)
 
 
-async def rejeter_daf(db: AsyncSession, da_id: int, user: Utilisateur, commentaire: str) -> DemandeAchat:
+async def rejeter_daf(db: AsyncSession, da_id: int, user: Utilisateur, commentaire: str, mot_de_passe: str) -> DemandeAchat:
+    _verifier_mot_de_passe(user, mot_de_passe)
     da = await _get_da_or_404(db, da_id)
     _verifier_role(user, RoleUtilisateur.DAF)
     _interdire_auto_validation(da, user)

@@ -1,4 +1,4 @@
-export type RoleUtilisateur = 'demandeur' | 'responsable' | 'daf' | 'acheteur' | 'admin'
+export type RoleUtilisateur = 'demandeur' | 'responsable' | 'daf' | 'acheteur' | 'admin' | 'pharmacien'
 export type TypeDA = 'medical' | 'bien_service'
 export type NatureDA = 'achat' | 'service'
 export type MotifDA = 'reappro' | 'nouveau_besoin' | 'commande_specifique' | 'remplacement' | 'activite_urgente'

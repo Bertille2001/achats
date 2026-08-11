@@ -141,6 +141,11 @@ export default function DetailDAPage() {
   const [da, setDa] = useState<DemandeAchat | null>(null)
   const [onglet, setOnglet] = useState<'info'|'articles'|'spec'|'historique'|'fichiers'>('info')
   const [commentaire, setCommentaire] = useState('')
+  const [mdpDecision, setMdpDecision] = useState('')
+  const [showVerifCode, setShowVerifCode] = useState(false)
+  const [codeSaisi, setCodeSaisi] = useState('')
+  const [resultatVerif, setResultatVerif] = useState<boolean | null>(null)
+  const [verifEnCours, setVerifEnCours] = useState(false)
   const [loading, setLoading] = useState(true)
   const [al, setAl] = useState(false)
   const [serviceAutorise, setServiceAutorise] = useState(false)
@@ -230,6 +235,7 @@ export default function DetailDAPage() {
     try {
       setDa(await fn())
       setCommentaire('')
+      setMdpDecision('')
       // Prévient la sidebar (badges "À traiter"/"Toutes les DA") de se
       // recalculer tout de suite, sans attendre le sondage de 15s ni un
       // changement de page.
@@ -263,6 +269,10 @@ export default function DetailDAPage() {
       afficherAlerte('Un commentaire est obligatoire pour rejeter (minimum 5 caractères).')
       return
     }
+    if (!mdpDecision) {
+      afficherAlerte('Entrez votre mot de passe pour confirmer cette décision.')
+      return
+    }
     act(fn)
   }
 
@@ -278,6 +288,20 @@ export default function DetailDAPage() {
   const peutValDaf  = utilisateur?.role === 'daf' && !estSaPropreDemande
   const estAcheteur = utilisateur?.role === 'acheteur' || utilisateur?.role === 'admin'
   const peutTraiter = estAcheteur || (serviceAutorise && utilisateur?.service === da.service_demandeur)
+
+  const verifierCode = async () => {
+    if (!codeSaisi.trim()) return
+    setVerifEnCours(true)
+    setResultatVerif(null)
+    try {
+      const { data } = await client.get<{ valide: boolean }>(`/demandes/${da.id}/verifier-code`, { params: { code: codeSaisi } })
+      setResultatVerif(data.valide)
+    } catch {
+      setResultatVerif(false)
+    } finally {
+      setVerifEnCours(false)
+    }
+  }
   // Le demandeur simple suit la progression (BC créé / commande passée /
   // livraison reçue) mais ne doit pas voir le détail chiffré de la commande
   // (quantités et prix réellement négociés/commandés) — ces informations
@@ -341,9 +365,31 @@ export default function DetailDAPage() {
           <>
             <button onClick={() => telechargerPDF(da.id, da.numero)} style={btnStyle}>↓ Télécharger PDF</button>
             <button onClick={() => imprimerPDF(da.id)} style={btnStyle}>⎙ Imprimer</button>
+            <button onClick={() => { setShowVerifCode(v => !v); setResultatVerif(null) }} style={btnStyle}>🔎 Vérifier un code</button>
           </>
         )}
       </div>
+
+      {showVerifCode && (
+        <div style={{ padding: '10px 18px', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>Code imprimé sur le document :</span>
+          <input
+            value={codeSaisi}
+            onChange={e => setCodeSaisi(e.target.value)}
+            placeholder="XXXX-XXXX-XXXX"
+            style={{ fontSize: 13, padding: '5px 9px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)', width: 160 }}
+          />
+          <button
+            onClick={verifierCode}
+            disabled={verifEnCours || !codeSaisi.trim()}
+            style={{ padding: '5px 12px', fontSize: 12.5, border: 'none', borderRadius: 6, background: '#0B3C7A', color: '#fff', cursor: 'pointer', fontWeight: 500 }}
+          >
+            {verifEnCours ? 'Vérification…' : 'Vérifier'}
+          </button>
+          {resultatVerif === true && <span style={{ fontSize: 12.5, fontWeight: 600, color: '#1e8f5f' }}>✓ Document authentique, non modifié</span>}
+          {resultatVerif === false && <span style={{ fontSize: 12.5, fontWeight: 600, color: '#c0392b' }}>✗ Code invalide — le document ne correspond pas aux données actuelles</span>}
+        </div>
+      )}
 
       <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
 
@@ -566,18 +612,25 @@ export default function DetailDAPage() {
                     placeholder="Commentaire (obligatoire pour rejeter, min. 5 caractères)"
                     style={{ width: '100%', fontSize: 13.5, padding: '7px 9px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)', resize: 'none', minHeight: 60, boxSizing: 'border-box', fontFamily: 'inherit', marginBottom: 8 }}
                   />
+                  <input
+                    type="password"
+                    value={mdpDecision}
+                    onChange={e => setMdpDecision(e.target.value)}
+                    placeholder="Votre mot de passe (confirme votre identité)"
+                    style={{ width: '100%', fontSize: 13.5, padding: '7px 9px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)', boxSizing: 'border-box', marginBottom: 8 }}
+                  />
                   <div style={{ display: 'flex', gap: 7 }}>
                     <button
                       disabled={al}
-                      onClick={() => rejeter(() => demandesApi.rejeterResponsable(da.id, commentaire))}
+                      onClick={() => rejeter(() => demandesApi.rejeterResponsable(da.id, commentaire, mdpDecision))}
                       style={{ flex: 1, padding: '6px', fontSize: 13.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: al ? 'not-allowed' : 'pointer', color: 'var(--text-secondary)' }}
                     >
                       {al ? 'En cours…' : 'Rejeter'}
                     </button>
                     <button
-                      disabled={al}
-                      onClick={() => act(() => demandesApi.validerResponsable(da.id, commentaire || undefined))}
-                      style={{ flex: 1, padding: '6px', fontSize: 13.5, border: 'none', borderRadius: 5, background: al ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: al ? 'not-allowed' : 'pointer', fontWeight: 500 }}
+                      disabled={al || !mdpDecision}
+                      onClick={() => act(() => demandesApi.validerResponsable(da.id, commentaire || undefined, mdpDecision))}
+                      style={{ flex: 1, padding: '6px', fontSize: 13.5, border: 'none', borderRadius: 5, background: (al || !mdpDecision) ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: (al || !mdpDecision) ? 'not-allowed' : 'pointer', fontWeight: 500 }}
                     >
                       {al ? 'En cours…' : 'Valider'}
                     </button>
@@ -594,18 +647,25 @@ export default function DetailDAPage() {
                     placeholder="Commentaire (obligatoire pour rejeter, min. 5 caractères)"
                     style={{ width: '100%', fontSize: 13.5, padding: '7px 9px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)', resize: 'none', minHeight: 60, boxSizing: 'border-box', fontFamily: 'inherit', marginBottom: 8 }}
                   />
+                  <input
+                    type="password"
+                    value={mdpDecision}
+                    onChange={e => setMdpDecision(e.target.value)}
+                    placeholder="Votre mot de passe (confirme votre identité)"
+                    style={{ width: '100%', fontSize: 13.5, padding: '7px 9px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)', boxSizing: 'border-box', marginBottom: 8 }}
+                  />
                   <div style={{ display: 'flex', gap: 7 }}>
                     <button
                       disabled={al}
-                      onClick={() => rejeter(() => demandesApi.rejeterDaf(da.id, commentaire))}
+                      onClick={() => rejeter(() => demandesApi.rejeterDaf(da.id, commentaire, mdpDecision))}
                       style={{ flex: 1, padding: '6px', fontSize: 13.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: al ? 'not-allowed' : 'pointer', color: 'var(--text-secondary)' }}
                     >
                       {al ? 'En cours…' : 'Rejeter'}
                     </button>
                     <button
-                      disabled={al}
-                      onClick={() => act(() => demandesApi.validerDaf(da.id, commentaire || undefined))}
-                      style={{ flex: 1, padding: '6px', fontSize: 13.5, border: 'none', borderRadius: 5, background: al ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: al ? 'not-allowed' : 'pointer', fontWeight: 500 }}
+                      disabled={al || !mdpDecision}
+                      onClick={() => act(() => demandesApi.validerDaf(da.id, commentaire || undefined, mdpDecision))}
+                      style={{ flex: 1, padding: '6px', fontSize: 13.5, border: 'none', borderRadius: 5, background: (al || !mdpDecision) ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: (al || !mdpDecision) ? 'not-allowed' : 'pointer', fontWeight: 500 }}
                     >
                       {al ? 'En cours…' : 'Valider'}
                     </button>

@@ -79,6 +79,7 @@ async def telecharger_pdf(
         'fournisseur_suggere': da.fournisseur_suggere or '',
         'autres_specs': da.autres_specs or '',
         'lieu_utilisation': da.lieu_utilisation or '',
+        'montant_total_commande': da.montant_total_commande,
         'lignes': [
             {
                 'designation': l.designation,
@@ -94,7 +95,7 @@ async def telecharger_pdf(
         'historique': [
             {
                 'action': h.action.value,
-                'utilisateur': {'prenom': h.utilisateur.prenom, 'nom': h.utilisateur.nom},
+                'utilisateur': {'id': h.utilisateur.id, 'prenom': h.utilisateur.prenom, 'nom': h.utilisateur.nom},
                 'date_action': h.date_action.isoformat(),
                 'commentaire': h.commentaire or '',
             }
@@ -108,6 +109,39 @@ async def telecharger_pdf(
         media_type='application/pdf',
         headers={'Content-Disposition': f'attachment; filename="{da.numero}.pdf"'}
     )
+
+
+@router.get("/{da_id}/verifier-code")
+async def verifier_code_pdf(
+    da_id: int,
+    code: str,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Recalcule le code de vérification à partir des données actuelles de
+    la DA et le compare à celui saisi (imprimé sur un document papier) —
+    permet de confirmer qu'un document n'a pas été modifié depuis sa
+    génération, sans avoir à comparer les données une par une."""
+    from app.services.pdf_service import code_verification
+    da = await da_service._get_da_or_404(db, da_id)
+    da_dict = {
+        'numero': da.numero,
+        'montant_total_commande': da.montant_total_commande,
+        'historique': [
+            {
+                'action': h.action.value,
+                'utilisateur': {'id': h.utilisateur.id},
+                'date_action': h.date_action.isoformat(),
+            }
+            for h in da.historique
+        ],
+    }
+    def _normaliser(c: str) -> str:
+        return c.strip().upper().replace('-', '').replace(' ', '')
+
+    code_attendu = code_verification(da_dict)
+    valide = _normaliser(code) == _normaliser(code_attendu)
+    return {"valide": valide, "numero": da.numero}
 
 
 
@@ -137,22 +171,22 @@ async def soumettre(da_id: int, db: AsyncSession = Depends(get_db), current_user
 
 @router.post("/{da_id}/valider-responsable", response_model=DemandeAchatOut)
 async def valider_responsable(da_id: int, body: ValidationRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
-    return await da_service.valider_responsable(db, da_id, current_user, body.commentaire)
+    return await da_service.valider_responsable(db, da_id, current_user, body.commentaire, body.mot_de_passe)
 
 
 @router.post("/{da_id}/rejeter-responsable", response_model=DemandeAchatOut)
 async def rejeter_responsable(da_id: int, body: RejetRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
-    return await da_service.rejeter_responsable(db, da_id, current_user, body.commentaire)
+    return await da_service.rejeter_responsable(db, da_id, current_user, body.commentaire, body.mot_de_passe)
 
 
 @router.post("/{da_id}/valider-daf", response_model=DemandeAchatOut)
 async def valider_daf(da_id: int, body: ValidationRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
-    return await da_service.valider_daf(db, da_id, current_user, body.commentaire)
+    return await da_service.valider_daf(db, da_id, current_user, body.commentaire, body.mot_de_passe)
 
 
 @router.post("/{da_id}/rejeter-daf", response_model=DemandeAchatOut)
 async def rejeter_daf(da_id: int, body: RejetRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
-    return await da_service.rejeter_daf(db, da_id, current_user, body.commentaire)
+    return await da_service.rejeter_daf(db, da_id, current_user, body.commentaire, body.mot_de_passe)
 
 
 @router.post("/{da_id}/confirmer-reception-demandeur", response_model=DemandeAchatOut)

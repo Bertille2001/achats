@@ -91,6 +91,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const estValidateur = role && ['responsable', 'daf'].includes(role)
   const estAcheteur = role && ['acheteur', 'admin'].includes(role)
   const estAdmin = role === 'admin'
+  const estPharmacien = role === 'pharmacien'
 
   // Compter les messages non lus sur toutes les DA visibles. On exclut
   // toujours les messages envoyés par l'utilisateur connecté lui-même : un
@@ -278,7 +279,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </>
           )}
 
-          {estAcheteur && <NavItem to="/pharmacie" label="Pharmacie" dot={dot} />}
+          {(estAcheteur || estPharmacien) && <NavItem to="/pharmacie" label="Pharmacie" dot={dot} />}
 
           {estValidateur && <NavItem to="/historique-validations" label="Historique" dot={dot} />}
 

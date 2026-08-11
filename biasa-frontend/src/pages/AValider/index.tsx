@@ -86,6 +86,7 @@ export default function AValiderPage() {
   const [periode, setPeriode] = useState('tout')
   const [selection, setSelection] = useState<Set<number>>(new Set())
   const [validationEnCours, setValidationEnCours] = useState(false)
+  const [mdpGroupe, setMdpGroupe] = useState('')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const filtreStatut = searchParams.get('statut') // ex: 'approuvee' pour le lien "Réceptions"
@@ -158,21 +159,26 @@ export default function AValiderPage() {
 
   const validerSelection = async () => {
     if (selection.size === 0 || !statutCible) return
+    if (!mdpGroupe) {
+      afficherAlerte('Entrez votre mot de passe pour confirmer la validation groupée.')
+      return
+    }
     if (!(await demanderConfirmation(`Valider ${selection.size} demande(s) sélectionnée(s) ?`))) return
     setValidationEnCours(true)
     const ids = [...selection]
     const resultats = await Promise.allSettled(
       ids.map(id => statutCible === 'att_responsable'
-        ? demandesApi.validerResponsable(id)
-        : demandesApi.validerDaf(id))
+        ? demandesApi.validerResponsable(id, undefined, mdpGroupe)
+        : demandesApi.validerDaf(id, undefined, mdpGroupe))
     )
     const echecs = resultats.filter(r => r.status === 'rejected').length
     setValidationEnCours(false)
     setSelection(new Set())
+    setMdpGroupe('')
     const d = await demandesApi.toutesDemandesAcheteur()
     setDemandes(d)
     if (echecs > 0) {
-      afficherAlerte(`${ids.length - echecs} validée(s), ${echecs} en échec (statut déjà changé entre-temps ?).`)
+      afficherAlerte(`${ids.length - echecs} validée(s), ${echecs} en échec (mot de passe incorrect, ou statut déjà changé entre-temps ?).`)
     }
   }
 
@@ -200,13 +206,22 @@ export default function AValiderPage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {selection.size > 0 && (
-            <button
-              onClick={validerSelection}
-              disabled={validationEnCours}
-              style={{ padding: '7px 14px', fontSize: 13, fontWeight: 600, border: 'none', borderRadius: 6, background: '#1e8f5f', color: '#fff', cursor: validationEnCours ? 'default' : 'pointer', opacity: validationEnCours ? 0.7 : 1 }}
-            >
-              {validationEnCours ? 'Validation…' : `Valider la sélection (${selection.size})`}
-            </button>
+            <>
+              <input
+                type="password"
+                value={mdpGroupe}
+                onChange={e => setMdpGroupe(e.target.value)}
+                placeholder="Votre mot de passe"
+                style={{ fontSize: 13, padding: '6px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)', width: 150 }}
+              />
+              <button
+                onClick={validerSelection}
+                disabled={validationEnCours || !mdpGroupe}
+                style={{ padding: '7px 14px', fontSize: 13, fontWeight: 600, border: 'none', borderRadius: 6, background: (validationEnCours || !mdpGroupe) ? '#8fc7a9' : '#1e8f5f', color: '#fff', cursor: (validationEnCours || !mdpGroupe) ? 'default' : 'pointer' }}
+              >
+                {validationEnCours ? 'Validation…' : `Valider la sélection (${selection.size})`}
+              </button>
+            </>
           )}
           {nonVues > 0 && (
             <div style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>

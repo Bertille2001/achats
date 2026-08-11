@@ -11,6 +11,7 @@ class RoleUtilisateur(str, enum.Enum):
     DAF = "daf"
     ACHETEUR = "acheteur"
     ADMIN = "admin"
+    PHARMACIEN = "pharmacien"  # accès uniquement à l'onglet Pharmacie, pas au circuit d'achats
 
 
 class TypeDA(str, enum.Enum):

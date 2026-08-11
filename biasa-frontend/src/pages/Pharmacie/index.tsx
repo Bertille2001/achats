@@ -37,7 +37,7 @@ const formVide = (): SortiePharmacieForm => ({ date_sortie: aujourdhui(), servic
 
 export default function PharmaciePage() {
   const { utilisateur } = useAuthStore()
-  const accesAutorise = utilisateur?.role === 'acheteur' || utilisateur?.role === 'admin'
+  const accesAutorise = utilisateur?.role === 'acheteur' || utilisateur?.role === 'admin' || utilisateur?.role === 'pharmacien'
 
   const [sorties, setSorties] = useState<SortiePharmacie[]>([])
   const [loading, setLoading] = useState(true)

@@ -1,5 +1,7 @@
 # biasa/app/services/pdf_service.py
 import os
+import hmac
+import hashlib
 from io import BytesIO
 from datetime import datetime
 from reportlab.lib.pagesizes import A4
@@ -8,6 +10,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+from app.core.config import settings
 
 GRIS_BORD = colors.HexColor('#CCCCCC')
 GRIS_LEGER = colors.HexColor('#F2F2F2')
@@ -16,6 +19,24 @@ NOIR = colors.HexColor('#1a1a1a')
 
 import os
 LOGO_PATH = os.path.join(os.path.dirname(__file__), 'logo_biasa.png')
+
+ACTIONS_SIGNATURE = ('validation_responsable', 'rejet_responsable', 'validation_daf', 'rejet_daf')
+
+
+def code_verification(da: dict) -> str:
+    """Code court dérivé (HMAC) du numéro de DA, du montant commandé et de
+    l'historique des décisions (qui, quand). Comme l'historique n'est jamais
+    modifiable après coup, ce code ne peut être reproduit que si ces données
+    n'ont pas changé depuis l'impression — toute altération (dans la base ou
+    sur le papier) fait que le code recalculé ne correspond plus."""
+    parties = [str(da.get('numero', '')), str(da.get('montant_total_commande', 0) or 0)]
+    for h in da.get('historique', []):
+        if h.get('action') in ACTIONS_SIGNATURE:
+            uid = (h.get('utilisateur') or {}).get('id', '')
+            parties.append(f"{h['action']}:{uid}:{h.get('date_action', '')}")
+    base = '|'.join(parties)
+    digest = hmac.new(settings.SECRET_KEY.encode(), base.encode(), hashlib.sha256).hexdigest()
+    return f"{digest[:4]}-{digest[4:8]}-{digest[8:12]}".upper()
 
 
 MOTIF_LABELS = {
@@ -254,6 +275,17 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
     vt = Table(vd, colWidths=[5*cm, 8*cm, 3*cm], rowHeights=[0.65*cm, 1.3*cm, 1.3*cm])
     base_tbl(vt)
     story.append(vt)
+
+    # ── Code de vérification ────────────────────────────────────────────
+    # N'apparaît que si la DA a au moins une décision (validation/rejet) —
+    # avant ça, le document n'a rien à authentifier.
+    if any(h.get('action') in ACTIONS_SIGNATURE for h in hist):
+        story.append(Spacer(1, 0.3*cm))
+        code = code_verification(da)
+        story.append(P(
+            f'Code de vérification : {code}',
+            fontSize=7, textColor=colors.HexColor('#8a96a3')
+        ))
 
     doc.build(story)
     return buffer.getvalue()

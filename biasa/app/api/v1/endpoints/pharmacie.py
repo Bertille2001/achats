@@ -18,9 +18,7 @@ router = APIRouter(prefix="/pharmacie", tags=["Pharmacie"])
 
 
 def acces_pharmacie(current_user=Depends(get_current_user)):
-    # Même équipe que celle qui gère déjà les achats/le circuit d'approvisionnement,
-    # plus l'admin — pas de rôle dédié pour rester simple.
-    if current_user.role not in (RoleUtilisateur.ACHETEUR, RoleUtilisateur.ADMIN):
+    if current_user.role not in (RoleUtilisateur.PHARMACIEN, RoleUtilisateur.ACHETEUR, RoleUtilisateur.ADMIN):
         raise HTTPException(status_code=403, detail="Réservé au Service Achats / Pharmacie")
     return current_user
 
