@@ -44,7 +44,7 @@ body {
      uniformément avec zoom plutôt que de tout réécrire : textes, boutons,
      icônes et espacements grossissent ensemble, en gardant les mêmes
      proportions. */
-  zoom: 1.12;
+  zoom: 1.25;
 }
 @media print {
   body { zoom: 1; }
