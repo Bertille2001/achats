@@ -67,7 +67,29 @@ export default function ToutesDaPage() {
   })
 
   const montantTotal = filtrees.reduce((s, da) => s + (da.montant_total_commande || 0), 0)
+  const dasCommandees = filtrees.filter(da => da.montant_total_commande)
+  const montantMoyen = dasCommandees.length ? montantTotal / dasCommandees.length : 0
   const dateImpression = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+
+  // Analyse par service : nombre de demandes, montant dépensé et part du
+  // total, triée du service qui coûte le plus cher au moins cher — c'est la
+  // vue qu'un DAF ou un directeur cherche en premier dans ce genre de
+  // rapport.
+  const parService = Array.from(new Set(filtrees.map(da => da.service_demandeur)))
+    .map(s => {
+      const das = filtrees.filter(da => da.service_demandeur === s)
+      const montant = das.reduce((sum, da) => sum + (da.montant_total_commande || 0), 0)
+      return { service: s, nb: das.length, montant }
+    })
+    .sort((a, b) => b.montant - a.montant || b.nb - a.nb)
+  const montantMax = Math.max(1, ...parService.map(s => s.montant))
+
+  // Répartition par statut, pour voir d'un coup d'œil où en est le circuit
+  // (combien en attente, approuvées, rejetées, reçues).
+  const ORDRE_STATUTS: (keyof typeof STATUT_LABELS)[] = ['att_responsable', 'att_daf', 'approuvee', 'recue', 'rejetee', 'brouillon']
+  const parStatut = ORDRE_STATUTS
+    .map(s => ({ statut: s, nb: filtrees.filter(da => da.statut === s).length }))
+    .filter(x => x.nb > 0)
 
   const exporterExcel = () => {
     const echapper = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
@@ -122,9 +144,10 @@ export default function ToutesDaPage() {
 
       <div style={{ padding: '16px 18px' }}>
         {/* En-tête visible uniquement à l'impression */}
-        <div className="print-only" style={{ display: 'none', marginBottom: 16 }}>
-          <div style={{ fontSize: 19, fontWeight: 700, color: '#0B2C5C' }}>Clinique BIASA — Rapport des demandes d'achat</div>
-          <div style={{ fontSize: 12.5, color: '#4a617c', marginTop: 3 }}>
+        <div className="print-only" style={{ display: 'none', marginBottom: 18 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#4a617c', letterSpacing: '0.6px', textTransform: 'uppercase' as const }}>Clinique BIASA</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#0B2C5C', marginTop: 2 }}>Rapport des demandes d'achat</div>
+          <div style={{ fontSize: 12.5, color: '#4a617c', marginTop: 4 }}>
             Édité le {dateImpression}
             {periode !== 'tout' && ` · Période : ${FILTRES_PERIODE.find(([v]) => v === periode)?.[1]}`}
             {dateDebut && ` · Du ${new Date(dateDebut).toLocaleDateString('fr-FR')}`}
@@ -141,10 +164,47 @@ export default function ToutesDaPage() {
             <div style={{ fontSize: 20, fontWeight: 700, color: '#0B2C5C' }}>{filtrees.length}</div>
           </div>
           <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 16px', minWidth: 200 }}>
-            <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>Montant total (commandé)</div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>Montant total commandé</div>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#0B2C5C' }}>{fmtMontant(montantTotal)}</div>
           </div>
+          <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 16px', minWidth: 200 }}>
+            <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>Montant moyen par commande</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0B2C5C' }}>{dasCommandees.length ? fmtMontant(montantMoyen) : '0,00 FCFA'}</div>
+          </div>
         </div>
+
+        {/* Répartition par statut */}
+        {parStatut.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' as const }}>
+            {parStatut.map(({ statut: s, nb }) => (
+              <span key={s} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5, fontWeight: 600, padding: '5px 11px', borderRadius: 20, background: 'var(--bg-primary)', border: '1px solid var(--border)', color: dotColor(s) }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor(s) }} />
+                {nb} {STATUT_LABELS[s]}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Dépenses par service */}
+        {parService.length > 0 && (
+          <div className="print-card" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px', marginBottom: 14 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>Dépenses par service</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+              {parService.map(({ service: s, nb, montant }) => (
+                <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 160, flexShrink: 0, fontSize: 12.5, fontWeight: 500, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }} title={s}>{s}</div>
+                  <div style={{ flex: 1, background: 'var(--bg-secondary)', borderRadius: 4, height: 16, position: 'relative' as const, overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.max(2, (montant / montantMax) * 100)}%`, height: '100%', background: '#0B3C7A', borderRadius: 4 }} />
+                  </div>
+                  <div style={{ width: 130, flexShrink: 0, textAlign: 'right' as const, fontSize: 12.5, fontWeight: 600, color: '#0B2C5C' }}>{fmtMontant(montant)}</div>
+                  <div style={{ width: 90, flexShrink: 0, textAlign: 'right' as const, fontSize: 11.5, color: 'var(--text-secondary)' }}>
+                    {montantTotal > 0 ? `${Math.round((montant / montantTotal) * 100)} %` : '0 %'} · {nb} DA
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Filtres */}
         <div className="no-print" style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' as const, alignItems: 'center' }}>
@@ -240,8 +300,8 @@ export default function ToutesDaPage() {
                           {STATUT_LABELS[da.statut]}
                         </span>
                       </td>
-                      <td style={tdS}>{da.montant_total_commande ? fmtMontant(da.montant_total_commande) : '-'}</td>
-                      <td className="no-print" style={tdS}>{da.fichiers.length > 0 ? `${da.fichiers.length} fichier(s)` : '-'}</td>
+                      <td style={tdS}>{da.montant_total_commande ? fmtMontant(da.montant_total_commande) : <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' as const }}>Non commandé</span>}</td>
+                      <td className="no-print" style={tdS}>{da.fichiers.length > 0 ? `${da.fichiers.length} fichier(s)` : <span style={{ color: 'var(--text-muted)' }}>Aucun</span>}</td>
                       <td className="no-print" style={tdS}>
                         <button onClick={() => navigate(`/demandes/${da.id}`)} style={{ padding: '4px 8px', fontSize: 12.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>Voir</button>
                       </td>
