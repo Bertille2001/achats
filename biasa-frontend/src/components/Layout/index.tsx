@@ -344,8 +344,11 @@ export default function Layout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      {/* CONTENT */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: estMobile ? '100%' : undefined }}>
+      {/* CONTENT — le zoom d'agrandissement s'applique uniquement ici (pas sur
+          la barre latérale), pour que "Déconnexion" et le reste du menu
+          restent toujours visibles sans avoir à scroller, quelle que soit la
+          taille choisie pour le contenu des pages. */}
+      <div className="zone-contenu" style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: estMobile ? '100%' : undefined, zoom: 1.25 }}>
         {/* Topbar */}
         <div className="no-print" style={{ background: 'var(--bg-primary)', borderBottom: '1px solid var(--border)', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
