@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import client from '../../api/client'
+import { afficherAlerte, demanderConfirmation } from '../../store/modal'
 
 const CATEGORIES = [
   { key: 'service', label: 'Services' },
@@ -35,12 +36,12 @@ export default function ParametresPage() {
       setNouvelle('')
       charger(categorie)
     } catch (e: any) {
-      alert(e.response?.data?.detail || 'Erreur')
+      afficherAlerte(e.response?.data?.detail || 'Erreur')
     }
   }
 
   const supprimer = async (id: number) => {
-    if (!confirm('Supprimer cette valeur ?')) return
+    if (!(await demanderConfirmation('Supprimer cette valeur ?'))) return
     await client.delete(`/parametres/${id}`)
     charger(categorie)
   }

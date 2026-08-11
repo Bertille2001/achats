@@ -5,6 +5,7 @@ import { demandesApi } from '../../api/demandes'
 import { useAuthStore } from '../../store/auth'
 import type { DemandeAchat } from '../../types'
 import { STATUT_LABELS, URGENCE_LABELS, STATUT_COLORS, URGENCE_COLORS } from '../../types'
+import { afficherAlerte, demanderConfirmation } from '../../store/modal'
 
 const fmtD = (d: string) => new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
@@ -157,7 +158,7 @@ export default function AValiderPage() {
 
   const validerSelection = async () => {
     if (selection.size === 0 || !statutCible) return
-    if (!window.confirm(`Valider ${selection.size} demande(s) sélectionnée(s) ?`)) return
+    if (!(await demanderConfirmation(`Valider ${selection.size} demande(s) sélectionnée(s) ?`))) return
     setValidationEnCours(true)
     const ids = [...selection]
     const resultats = await Promise.allSettled(
@@ -171,7 +172,7 @@ export default function AValiderPage() {
     const d = await demandesApi.toutesDemandesAcheteur()
     setDemandes(d)
     if (echecs > 0) {
-      alert(`${ids.length - echecs} validée(s), ${echecs} en échec (statut déjà changé entre-temps ?).`)
+      afficherAlerte(`${ids.length - echecs} validée(s), ${echecs} en échec (statut déjà changé entre-temps ?).`)
     }
   }
 

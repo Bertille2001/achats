@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { servicesApi } from '../../api/demandes'
 import type { ServiceConfig } from '../../types'
+import { afficherAlerte } from '../../store/modal'
 
 export default function ServicesPage() {
   const [services, setServices] = useState<ServiceConfig[]>([])
@@ -19,7 +20,7 @@ export default function ServicesPage() {
       const updated = await servicesApi.modifier(nom, valeur)
       setServices(prev => prev.map(s => s.nom === nom ? updated : s))
     } catch (e: any) {
-      alert(e.response?.data?.detail || 'Erreur')
+      afficherAlerte(e.response?.data?.detail || 'Erreur')
     } finally {
       setEnCours(null)
     }

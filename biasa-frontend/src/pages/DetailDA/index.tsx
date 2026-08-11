@@ -5,6 +5,7 @@ import { useAuthStore } from '../../store/auth'
 import type { DemandeAchat, FichierDA } from '../../types'
 import { STATUT_LABELS, URGENCE_LABELS, MOTIF_LABELS, ACTION_LABELS, STATUT_COLORS, URGENCE_COLORS } from '../../types'
 import client from '../../api/client'
+import { afficherAlerte } from '../../store/modal'
 
 const fmt = (d: string) => new Date(d).toLocaleString('fr-FR')
 const fmtD = (d: string) => new Date(d).toLocaleDateString('fr-FR')
@@ -87,7 +88,7 @@ function ouvrirFichier(daId: number, fichierId: number, nom: string) {
       const url = URL.createObjectURL(blob)
       window.open(url, '_blank')
     })
-    .catch(() => alert('Erreur lors de l\'ouverture du fichier'))
+    .catch(() => afficherAlerte('Erreur lors de l\'ouverture du fichier'))
 }
 
 function telechargerFichier(daId: number, fichierId: number, nom: string) {
@@ -102,7 +103,7 @@ function telechargerFichier(daId: number, fichierId: number, nom: string) {
       a.click()
       URL.revokeObjectURL(url)
     })
-    .catch(() => alert('Erreur lors du téléchargement'))
+    .catch(() => afficherAlerte('Erreur lors du téléchargement'))
 }
 
 function telechargerPDF(daId: number, numero: string) {
@@ -115,7 +116,7 @@ function telechargerPDF(daId: number, numero: string) {
       a.click()
       URL.revokeObjectURL(url)
     })
-    .catch(() => alert('Erreur lors de la génération du PDF'))
+    .catch(() => afficherAlerte('Erreur lors de la génération du PDF'))
 }
 
 function imprimerPDF(daId: number) {
@@ -130,7 +131,7 @@ function imprimerPDF(daId: number) {
         })
       }
     })
-    .catch(() => alert('Erreur lors de la génération du PDF'))
+    .catch(() => afficherAlerte('Erreur lors de la génération du PDF'))
 }
 
 export default function DetailDAPage() {
@@ -234,7 +235,7 @@ export default function DetailDAPage() {
       // changement de page.
       window.dispatchEvent(new Event('biasa:refresh-badges'))
     }
-    catch (e: any) { alert(e.response?.data?.detail || 'Erreur') }
+    catch (e: any) { afficherAlerte(e.response?.data?.detail || 'Erreur') }
     finally { setAl(false) }
   }
 
@@ -251,7 +252,7 @@ export default function DetailDAPage() {
       const f = await demandesApi.uploadFichier(da.id, file)
       setDa({ ...da, fichiers: [...da.fichiers, f] })
     } catch (e: any) {
-      alert(e.response?.data?.detail || "Erreur lors de l'envoi du fichier")
+      afficherAlerte(e.response?.data?.detail || "Erreur lors de l'envoi du fichier")
     } finally {
       setUploadEnCours(null)
     }
@@ -259,7 +260,7 @@ export default function DetailDAPage() {
 
   const rejeter = (fn: () => Promise<DemandeAchat>) => {
     if (commentaire.trim().length < 5) {
-      alert('Un commentaire est obligatoire pour rejeter (minimum 5 caractères).')
+      afficherAlerte('Un commentaire est obligatoire pour rejeter (minimum 5 caractères).')
       return
     }
     act(fn)
@@ -298,7 +299,7 @@ export default function DetailDAPage() {
       localStorage.setItem(`messages_vus_${updated.id}`, String(updated.messages.length))
       window.dispatchEvent(new Event('biasa:refresh-badges'))
     } catch (e: any) {
-      alert(e.response?.data?.detail || 'Erreur lors de l\'envoi du message')
+      afficherAlerte(e.response?.data?.detail || 'Erreur lors de l\'envoi du message')
     } finally {
       setEnvoiMessage(false)
     }

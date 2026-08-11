@@ -3,6 +3,7 @@ import { demandesApi } from '../../api/demandes'
 import { useAuthStore } from '../../store/auth'
 import type { DemandeAchatForm, LigneDAForm, TypeDA, MotifDA, UrgenceDA } from '../../types'
 import client from '../../api/client'
+import { afficherAlerte } from '../../store/modal'
 
 const ligneVide = (n: number): LigneDAForm => ({
   numero_ligne: n, designation: '', quantite: 1, unite: '',
@@ -121,7 +122,7 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
         onSuccess?.()
       }
     } catch (e: any) {
-      alert(e.response?.data?.detail || 'Erreur lors de la soumission')
+      afficherAlerte(e.response?.data?.detail || 'Erreur lors de la soumission')
     } finally {
       setLoading(false)
     }

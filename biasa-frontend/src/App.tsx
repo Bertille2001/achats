@@ -3,6 +3,7 @@ import { router } from './router'
 import { useEffect } from 'react'
 import { useAuthStore } from './store/auth'
 import { authApi } from './api/auth'
+import ModalGlobal from './components/ModalGlobal'
 
 export default function App() {
   const { token, setAuth, logout } = useAuthStore()
@@ -14,5 +15,10 @@ export default function App() {
       .catch(() => logout())
   }, [])
 
-  return <RouterProvider router={router} />
+  return (
+    <>
+      <RouterProvider router={router} />
+      <ModalGlobal />
+    </>
+  )
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import client from '../../api/client'
+import { afficherAlerte } from '../../store/modal'
 
 export default function ConfigEmailPage() {
   const [form, setForm] = useState({
@@ -27,7 +28,7 @@ export default function ConfigEmailPage() {
   }
 
   const tester = async () => {
-    if (!testEmail) { alert('Entrez un email de test'); return }
+    if (!testEmail) { afficherAlerte('Entrez un email de test'); return }
     setTesting(true)
     setMsg('')
     try {

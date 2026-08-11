@@ -8,7 +8,8 @@ from app.models.models import Utilisateur, RoleUtilisateur
 from app.schemas.schemas import UtilisateurCreate, UtilisateurOut
 from app.services.user_service import create_user, get_user_by_username
 from app.core.security import hash_password
-from pydantic import BaseModel, EmailStr
+from app.schemas.schemas import _email_vide_vers_none
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 
 router = APIRouter(prefix="/users", tags=["Utilisateurs"])
@@ -30,6 +31,8 @@ class UtilisateurUpdate(BaseModel):
     role: Optional[RoleUtilisateur] = None
     actif: Optional[bool] = None
     mot_de_passe: Optional[str] = None
+
+    _email_vide = field_validator('email', mode='before')(_email_vide_vers_none)
 
 
 @router.get("/", response_model=list[UtilisateurOut])

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
 import { demandesApi } from '../../api/demandes'
 import client from '../../api/client'
 import { etatNotifications, activerNotifications, desactiverNotifications, type EtatNotifications } from '../../notifications'
+import { afficherAlerte } from '../../store/modal'
 
 const TITRE_BASE = 'Clinique BIASA - Achats'
 
@@ -57,11 +58,11 @@ export default function Layout({ children }: { children: ReactNode }) {
       } else {
         const resultat = await activerNotifications()
         setEtatNotifs(resultat)
-        if (resultat === 'refusees') alert("Les notifications ont été bloquées dans les réglages du navigateur. Autorise-les pour ce site pour les activer.")
-        if (resultat === 'indisponibles') alert("Les notifications ne sont pas disponibles sur ce navigateur (ou le serveur n'a pas encore été configuré pour les envoyer).")
+        if (resultat === 'refusees') afficherAlerte("Les notifications ont été bloquées dans les réglages du navigateur. Autorise-les pour ce site pour les activer.")
+        if (resultat === 'indisponibles') afficherAlerte("Les notifications ne sont pas disponibles sur ce navigateur (ou le serveur n'a pas encore été configuré pour les envoyer).")
       }
     } catch {
-      alert("Erreur lors de l'activation des notifications.")
+      afficherAlerte("Erreur lors de l'activation des notifications.")
     } finally {
       setChargementNotifs(false)
     }

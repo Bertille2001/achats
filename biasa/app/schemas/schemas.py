@@ -1,8 +1,19 @@
 from __future__ import annotations
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from app.models.models import TypeDA, NatureDA, MotifDA, UrgenceDA, StatutDA, RoleUtilisateur, ActionHistorique
+
+
+def _email_vide_vers_none(v):
+    # Beaucoup d'employés n'ont pas d'adresse email dans la clinique : le
+    # champ arrive du formulaire comme une chaîne vide plutôt qu'absent, or
+    # EmailStr rejette explicitement "" (ce n'est pas un email valide) —
+    # sans cette conversion, toute création/modification avec un email vide
+    # échoue silencieusement avec une erreur 422.
+    if v is None or (isinstance(v, str) and v.strip() == ''):
+        return None
+    return v
 
 
 class UtilisateurCreate(BaseModel):
@@ -14,6 +25,8 @@ class UtilisateurCreate(BaseModel):
     poste: Optional[str] = None
     service: Optional[str] = None
     role: RoleUtilisateur = RoleUtilisateur.DEMANDEUR
+
+    _email_vide = field_validator('email', mode='before')(_email_vide_vers_none)
 
 
 class UtilisateurOut(BaseModel):

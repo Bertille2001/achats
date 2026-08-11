@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import client from '../../api/client'
+import { afficherAlerte, demanderConfirmation } from '../../store/modal'
 
 type Role = 'demandeur' | 'responsable' | 'daf' | 'acheteur' | 'admin'
 
@@ -116,14 +117,14 @@ export default function GestionUsersPage() {
       setShowModal(false)
       charger()
     } catch (e: any) {
-      alert(e.response?.data?.detail || 'Erreur')
+      afficherAlerte(e.response?.data?.detail || 'Erreur')
     } finally {
       setSaving(false)
     }
   }
 
   const desactiver = async (u: User) => {
-    if (!confirm(`Désactiver ${u.prenom} ${u.nom} ?`)) return
+    if (!(await demanderConfirmation(`Désactiver ${u.prenom} ${u.nom} ?`))) return
     await client.delete(`/users/${u.id}`)
     charger()
   }
