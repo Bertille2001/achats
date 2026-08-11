@@ -171,22 +171,22 @@ async def soumettre(da_id: int, db: AsyncSession = Depends(get_db), current_user
 
 @router.post("/{da_id}/valider-responsable", response_model=DemandeAchatOut)
 async def valider_responsable(da_id: int, body: ValidationRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
-    return await da_service.valider_responsable(db, da_id, current_user, body.commentaire, body.mot_de_passe)
+    return await da_service.valider_responsable(db, da_id, current_user, body.commentaire, body.code_signature)
 
 
 @router.post("/{da_id}/rejeter-responsable", response_model=DemandeAchatOut)
 async def rejeter_responsable(da_id: int, body: RejetRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
-    return await da_service.rejeter_responsable(db, da_id, current_user, body.commentaire, body.mot_de_passe)
+    return await da_service.rejeter_responsable(db, da_id, current_user, body.commentaire, body.code_signature)
 
 
 @router.post("/{da_id}/valider-daf", response_model=DemandeAchatOut)
 async def valider_daf(da_id: int, body: ValidationRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
-    return await da_service.valider_daf(db, da_id, current_user, body.commentaire, body.mot_de_passe)
+    return await da_service.valider_daf(db, da_id, current_user, body.commentaire, body.code_signature)
 
 
 @router.post("/{da_id}/rejeter-daf", response_model=DemandeAchatOut)
 async def rejeter_daf(da_id: int, body: RejetRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
-    return await da_service.rejeter_daf(db, da_id, current_user, body.commentaire, body.mot_de_passe)
+    return await da_service.rejeter_daf(db, da_id, current_user, body.commentaire, body.code_signature)
 
 
 @router.post("/{da_id}/confirmer-reception-demandeur", response_model=DemandeAchatOut)

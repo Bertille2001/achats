@@ -282,6 +282,13 @@ export default function Layout({ children }: { children: ReactNode }) {
           {(estAcheteur || estPharmacien) && <NavItem to="/pharmacie" label="Pharmacie" dot={dot} />}
 
           {estValidateur && <NavItem to="/historique-validations" label="Historique" dot={dot} />}
+          {estValidateur && (
+            <NavItem
+              to="/code-signature"
+              label={utilisateur?.code_signature_defini ? 'Code de signature' : '⚠ Code de signature'}
+              dot={dot}
+            />
+          )}
 
           {estAdmin && (
             <>

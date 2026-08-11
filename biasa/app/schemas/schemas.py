@@ -41,6 +41,7 @@ class UtilisateurOut(BaseModel):
     actif: bool
     doit_changer_mdp: bool = False
     verrouille_jusqua: Optional[datetime] = None
+    code_signature_defini: bool = False
     model_config = {"from_attributes": True}
 
 
@@ -52,6 +53,11 @@ class LoginRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     ancien_mot_de_passe: Optional[str] = None  # facultatif si doit_changer_mdp (premier changement)
     nouveau_mot_de_passe: str = Field(min_length=6)
+
+
+class DefinirCodeSignatureRequest(BaseModel):
+    mot_de_passe: str = Field(min_length=1)  # confirme l'identité avant de (re)définir le code
+    nouveau_code: str = Field(min_length=4, max_length=20)
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -228,13 +234,14 @@ class ValidationRequest(BaseModel):
     commentaire: Optional[str] = None
     # Redemandé au moment précis de valider (pas juste être connecté) : ça
     # prouve que c'est bien la personne qui décide, pas quelqu'un resté
-    # connecté sur son poste pendant sa pause.
-    mot_de_passe: str = Field(min_length=1)
+    # connecté sur son poste pendant sa pause. Code distinct du mot de passe
+    # de connexion, connu d'elle seule.
+    code_signature: str = Field(min_length=1)
 
 
 class RejetRequest(BaseModel):
     commentaire: str = Field(min_length=5)
-    mot_de_passe: str = Field(min_length=1)
+    code_signature: str = Field(min_length=1)
 
 
 class LigneSortiePharmacieCreate(BaseModel):

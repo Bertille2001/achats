@@ -5,10 +5,12 @@ from app.db.session import get_db
 from app.schemas.schemas import (
     LoginRequest, TokenOut, UtilisateurCreate, UtilisateurOut,
     ChangePasswordRequest, ForgotPasswordRequest, ResetPasswordRequest,
+    DefinirCodeSignatureRequest,
 )
 from app.services.user_service import (
     authenticate_user, create_user, get_user_by_username, get_admins,
     changer_mot_de_passe, demander_reinitialisation, reinitialiser_mot_de_passe,
+    definir_code_signature,
 )
 from app.services.mail_service import notifier_reinitialisation, notifier_admin_reinitialisation
 from app.services.push_service import notifier_admin_mdp_oublie
@@ -47,6 +49,13 @@ async def me(current_user=Depends(get_current_user)):
 @router.post("/change-password", response_model=UtilisateurOut)
 async def change_password(data: ChangePasswordRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
     await changer_mot_de_passe(db, current_user, data.ancien_mot_de_passe, data.nouveau_mot_de_passe)
+    await db.commit()
+    return UtilisateurOut.model_validate(current_user)
+
+
+@router.post("/code-signature", response_model=UtilisateurOut)
+async def code_signature(data: DefinirCodeSignatureRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+    await definir_code_signature(db, current_user, data.mot_de_passe, data.nouveau_code)
     await db.commit()
     return UtilisateurOut.model_validate(current_user)
 

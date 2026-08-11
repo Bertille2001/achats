@@ -86,7 +86,7 @@ export default function AValiderPage() {
   const [periode, setPeriode] = useState('tout')
   const [selection, setSelection] = useState<Set<number>>(new Set())
   const [validationEnCours, setValidationEnCours] = useState(false)
-  const [mdpGroupe, setMdpGroupe] = useState('')
+  const [codeGroupe, setCodeGroupe] = useState('')
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const filtreStatut = searchParams.get('statut') // ex: 'approuvee' pour le lien "Réceptions"
@@ -159,8 +159,8 @@ export default function AValiderPage() {
 
   const validerSelection = async () => {
     if (selection.size === 0 || !statutCible) return
-    if (!mdpGroupe) {
-      afficherAlerte('Entrez votre mot de passe pour confirmer la validation groupée.')
+    if (!codeGroupe) {
+      afficherAlerte('Entrez votre code de signature pour confirmer la validation groupée.')
       return
     }
     if (!(await demanderConfirmation(`Valider ${selection.size} demande(s) sélectionnée(s) ?`))) return
@@ -168,17 +168,17 @@ export default function AValiderPage() {
     const ids = [...selection]
     const resultats = await Promise.allSettled(
       ids.map(id => statutCible === 'att_responsable'
-        ? demandesApi.validerResponsable(id, undefined, mdpGroupe)
-        : demandesApi.validerDaf(id, undefined, mdpGroupe))
+        ? demandesApi.validerResponsable(id, undefined, codeGroupe)
+        : demandesApi.validerDaf(id, undefined, codeGroupe))
     )
     const echecs = resultats.filter(r => r.status === 'rejected').length
     setValidationEnCours(false)
     setSelection(new Set())
-    setMdpGroupe('')
+    setCodeGroupe('')
     const d = await demandesApi.toutesDemandesAcheteur()
     setDemandes(d)
     if (echecs > 0) {
-      afficherAlerte(`${ids.length - echecs} validée(s), ${echecs} en échec (mot de passe incorrect, ou statut déjà changé entre-temps ?).`)
+      afficherAlerte(`${ids.length - echecs} validée(s), ${echecs} en échec (code de signature incorrect, ou statut déjà changé entre-temps ?).`)
     }
   }
 
@@ -209,15 +209,15 @@ export default function AValiderPage() {
             <>
               <input
                 type="password"
-                value={mdpGroupe}
-                onChange={e => setMdpGroupe(e.target.value)}
-                placeholder="Votre mot de passe"
+                value={codeGroupe}
+                onChange={e => setCodeGroupe(e.target.value)}
+                placeholder="Votre code de signature"
                 style={{ fontSize: 13, padding: '6px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)', width: 150 }}
               />
               <button
                 onClick={validerSelection}
-                disabled={validationEnCours || !mdpGroupe}
-                style={{ padding: '7px 14px', fontSize: 13, fontWeight: 600, border: 'none', borderRadius: 6, background: (validationEnCours || !mdpGroupe) ? '#8fc7a9' : '#1e8f5f', color: '#fff', cursor: (validationEnCours || !mdpGroupe) ? 'default' : 'pointer' }}
+                disabled={validationEnCours || !codeGroupe}
+                style={{ padding: '7px 14px', fontSize: 13, fontWeight: 600, border: 'none', borderRadius: 6, background: (validationEnCours || !codeGroupe) ? '#8fc7a9' : '#1e8f5f', color: '#fff', cursor: (validationEnCours || !codeGroupe) ? 'default' : 'pointer' }}
               >
                 {validationEnCours ? 'Validation…' : `Valider la sélection (${selection.size})`}
               </button>

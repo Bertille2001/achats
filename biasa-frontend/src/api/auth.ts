@@ -15,4 +15,8 @@ export const authApi = {
     const { data } = await client.post<Utilisateur>('/auth/reset-password', { jeton, nouveau_mot_de_passe: nouveau })
     return data
   },
+  definirCodeSignature: async (motDePasse: string, nouveauCode: string): Promise<Utilisateur> => {
+    const { data } = await client.post<Utilisateur>('/auth/code-signature', { mot_de_passe: motDePasse, nouveau_code: nouveauCode })
+    return data
+  },
 }

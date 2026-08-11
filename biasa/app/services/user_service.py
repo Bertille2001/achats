@@ -111,6 +111,17 @@ async def changer_mot_de_passe(db: AsyncSession, user: Utilisateur, ancien: str 
     await db.flush()
 
 
+async def definir_code_signature(db: AsyncSession, user: Utilisateur, mot_de_passe: str, nouveau_code: str) -> None:
+    # Le mot de passe de connexion est redemandé une fois ici pour confirmer
+    # l'identité avant de créer/changer le code — ensuite, c'est ce code
+    # (et lui seul) qui sera redemandé à chaque validation/rejet.
+    if not verify_password(mot_de_passe, user.mot_de_passe):
+        raise HTTPException(status_code=401, detail="Mot de passe incorrect.")
+    user.code_signature = hash_password(nouveau_code)
+    _log(db, "definition_code_signature", user=user)
+    await db.flush()
+
+
 async def demander_reinitialisation(db: AsyncSession, username: str) -> tuple[Utilisateur, str] | None:
     user = await get_user_by_username(db, username)
     if not user or not user.actif:

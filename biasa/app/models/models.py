@@ -85,8 +85,18 @@ class Utilisateur(Base):
     jeton_reinitialisation: Mapped[str | None] = mapped_column(String(100), nullable=True)
     jeton_expire_le: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
+    # Code de signature : secret distinct du mot de passe de connexion,
+    # connu uniquement de la personne, utilisé seulement pour signer une
+    # validation/rejet (responsable, DAF). Nullable tant qu'il n'a pas
+    # encore été défini par l'intéressé.
+    code_signature: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
     demandes: Mapped[list["DemandeAchat"]] = relationship(back_populates="demandeur", foreign_keys="DemandeAchat.demandeur_id")
     historiques: Mapped[list["HistoriqueValidation"]] = relationship(back_populates="utilisateur")
+
+    @property
+    def code_signature_defini(self) -> bool:
+        return self.code_signature is not None
 
 
 class DemandeAchat(Base):

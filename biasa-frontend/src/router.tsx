@@ -18,6 +18,7 @@ import JournalAuditPage from './pages/JournalAudit'
 import ServicesPage from './pages/Services'
 import ModifierDAPage from './pages/ModifierDA'
 import PharmaciePage from './pages/Pharmacie'
+import CodeSignaturePage from './pages/CodeSignature'
 
 export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -41,6 +42,7 @@ export const router = createBrowserRouter([
       { path: '/services', element: <ServicesPage /> },
       { path: '/demandes/:id/modifier', element: <ModifierDAPage /> },
       { path: '/pharmacie', element: <PharmaciePage /> },
+      { path: '/code-signature', element: <CodeSignaturePage /> },
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },

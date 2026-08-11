@@ -141,7 +141,7 @@ export default function DetailDAPage() {
   const [da, setDa] = useState<DemandeAchat | null>(null)
   const [onglet, setOnglet] = useState<'info'|'articles'|'spec'|'historique'|'fichiers'>('info')
   const [commentaire, setCommentaire] = useState('')
-  const [mdpDecision, setMdpDecision] = useState('')
+  const [codeSignature, setCodeSignature] = useState('')
   const [showVerifCode, setShowVerifCode] = useState(false)
   const [codeSaisi, setCodeSaisi] = useState('')
   const [resultatVerif, setResultatVerif] = useState<boolean | null>(null)
@@ -235,7 +235,7 @@ export default function DetailDAPage() {
     try {
       setDa(await fn())
       setCommentaire('')
-      setMdpDecision('')
+      setCodeSignature('')
       // Prévient la sidebar (badges "À traiter"/"Toutes les DA") de se
       // recalculer tout de suite, sans attendre le sondage de 15s ni un
       // changement de page.
@@ -269,8 +269,8 @@ export default function DetailDAPage() {
       afficherAlerte('Un commentaire est obligatoire pour rejeter (minimum 5 caractères).')
       return
     }
-    if (!mdpDecision) {
-      afficherAlerte('Entrez votre mot de passe pour confirmer cette décision.')
+    if (!codeSignature) {
+      afficherAlerte('Entrez votre code de signature pour confirmer cette décision.')
       return
     }
     act(fn)
@@ -614,23 +614,23 @@ export default function DetailDAPage() {
                   />
                   <input
                     type="password"
-                    value={mdpDecision}
-                    onChange={e => setMdpDecision(e.target.value)}
-                    placeholder="Votre mot de passe (confirme votre identité)"
+                    value={codeSignature}
+                    onChange={e => setCodeSignature(e.target.value)}
+                    placeholder="Votre code de signature"
                     style={{ width: '100%', fontSize: 13.5, padding: '7px 9px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)', boxSizing: 'border-box', marginBottom: 8 }}
                   />
                   <div style={{ display: 'flex', gap: 7 }}>
                     <button
                       disabled={al}
-                      onClick={() => rejeter(() => demandesApi.rejeterResponsable(da.id, commentaire, mdpDecision))}
+                      onClick={() => rejeter(() => demandesApi.rejeterResponsable(da.id, commentaire, codeSignature))}
                       style={{ flex: 1, padding: '6px', fontSize: 13.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: al ? 'not-allowed' : 'pointer', color: 'var(--text-secondary)' }}
                     >
                       {al ? 'En cours…' : 'Rejeter'}
                     </button>
                     <button
-                      disabled={al || !mdpDecision}
-                      onClick={() => act(() => demandesApi.validerResponsable(da.id, commentaire || undefined, mdpDecision))}
-                      style={{ flex: 1, padding: '6px', fontSize: 13.5, border: 'none', borderRadius: 5, background: (al || !mdpDecision) ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: (al || !mdpDecision) ? 'not-allowed' : 'pointer', fontWeight: 500 }}
+                      disabled={al || !codeSignature}
+                      onClick={() => act(() => demandesApi.validerResponsable(da.id, commentaire || undefined, codeSignature))}
+                      style={{ flex: 1, padding: '6px', fontSize: 13.5, border: 'none', borderRadius: 5, background: (al || !codeSignature) ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: (al || !codeSignature) ? 'not-allowed' : 'pointer', fontWeight: 500 }}
                     >
                       {al ? 'En cours…' : 'Valider'}
                     </button>
@@ -649,23 +649,23 @@ export default function DetailDAPage() {
                   />
                   <input
                     type="password"
-                    value={mdpDecision}
-                    onChange={e => setMdpDecision(e.target.value)}
-                    placeholder="Votre mot de passe (confirme votre identité)"
+                    value={codeSignature}
+                    onChange={e => setCodeSignature(e.target.value)}
+                    placeholder="Votre code de signature"
                     style={{ width: '100%', fontSize: 13.5, padding: '7px 9px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-primary)', color: 'var(--text-primary)', boxSizing: 'border-box', marginBottom: 8 }}
                   />
                   <div style={{ display: 'flex', gap: 7 }}>
                     <button
                       disabled={al}
-                      onClick={() => rejeter(() => demandesApi.rejeterDaf(da.id, commentaire, mdpDecision))}
+                      onClick={() => rejeter(() => demandesApi.rejeterDaf(da.id, commentaire, codeSignature))}
                       style={{ flex: 1, padding: '6px', fontSize: 13.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: al ? 'not-allowed' : 'pointer', color: 'var(--text-secondary)' }}
                     >
                       {al ? 'En cours…' : 'Rejeter'}
                     </button>
                     <button
-                      disabled={al || !mdpDecision}
-                      onClick={() => act(() => demandesApi.validerDaf(da.id, commentaire || undefined, mdpDecision))}
-                      style={{ flex: 1, padding: '6px', fontSize: 13.5, border: 'none', borderRadius: 5, background: (al || !mdpDecision) ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: (al || !mdpDecision) ? 'not-allowed' : 'pointer', fontWeight: 500 }}
+                      disabled={al || !codeSignature}
+                      onClick={() => act(() => demandesApi.validerDaf(da.id, commentaire || undefined, codeSignature))}
+                      style={{ flex: 1, padding: '6px', fontSize: 13.5, border: 'none', borderRadius: 5, background: (al || !codeSignature) ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: (al || !codeSignature) ? 'not-allowed' : 'pointer', fontWeight: 500 }}
                     >
                       {al ? 'En cours…' : 'Valider'}
                     </button>

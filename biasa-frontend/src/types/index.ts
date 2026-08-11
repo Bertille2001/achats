@@ -6,7 +6,7 @@ export type UrgenceDA = 'haute' | 'moyenne' | 'faible'
 export type StatutDA = 'brouillon' | 'soumise' | 'att_responsable' | 'att_daf' | 'approuvee' | 'rejetee' | 'recue'
 export type ActionHistorique = 'creation' | 'soumission' | 'validation_responsable' | 'rejet_responsable' | 'validation_daf' | 'rejet_daf' | 'traitement_acheteur' | 'confirmation_reception_demandeur' | 'confirmation_reception_acheteur' | 'bc_cree' | 'commande_passee' | 'livraison_recue'
 
-export interface Utilisateur { id: number; nom: string; prenom: string; username: string; email: string | null; poste: string | null; service: string | null; role: RoleUtilisateur; actif: boolean; doit_changer_mdp: boolean; verrouille_jusqua: string | null }
+export interface Utilisateur { id: number; nom: string; prenom: string; username: string; email: string | null; poste: string | null; service: string | null; role: RoleUtilisateur; actif: boolean; doit_changer_mdp: boolean; verrouille_jusqua: string | null; code_signature_defini: boolean }
 export interface TokenOut { access_token: string; token_type: string; utilisateur: Utilisateur }
 export interface LigneDA { id: number; numero_ligne: number; designation: string; quantite: number; unite: string | null; observation: string | null; stock_actuel: string | null; reference_marque: string | null; description_technique: string | null }
 export interface FichierDA { id: number; nom_original: string; taille_octets: number; mime_type: string; uploade_le: string }
