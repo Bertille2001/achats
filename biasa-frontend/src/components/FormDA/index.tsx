@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { demandesApi } from '../../api/demandes'
 import { useAuthStore } from '../../store/auth'
 import type { DemandeAchatForm, LigneDAForm, TypeDA, MotifDA, UrgenceDA } from '../../types'
+import { LABEL_TYPE_DA } from '../../types'
 import client from '../../api/client'
 import { afficherAlerte } from '../../store/modal'
 
@@ -11,7 +12,7 @@ const ligneVide = (n: number): LigneDAForm => ({
 })
 const formVide = (service: string, poste: string): DemandeAchatForm => ({
   service_demandeur: service, poste_fonction: poste,
-  type_da: 'medical', nature: 'achat', motif: 'reappro', urgence: 'moyenne',
+  type_da: 'bien_service', nature: 'achat', motif: 'reappro', urgence: 'moyenne',
   justification: '', normes_certifications: '', date_peremption_min: '',
   fournisseur_suggere: '', autres_specs: '', lieu_utilisation: '',
   lignes: [ligneVide(1), ligneVide(2)],
@@ -85,6 +86,16 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
   const supprimerFichier = (i: number) => setFichiers(prev => prev.filter((_, idx) => idx !== i))
 
   const isMed = form.type_da === 'medical'
+
+  // Les demandes « Biens et Consommables Médicaux » passent par la Pharmacie
+  // (qui centralise ce stock pour tous les services, y compris le labo) —
+  // seul le service Pharmacie ou un admin peut donc choisir ce type.
+  const peutMedical = utilisateur?.role === 'admin' || form.service_demandeur.trim().toLowerCase() === 'pharmacie'
+
+  useEffect(() => {
+    if (!peutMedical && form.type_da === 'medical') set('type_da', 'bien_service')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [peutMedical])
 
   // Validation — seuls les champs vraiment indispensables sont obligatoires :
   // le service, le motif/urgence (déjà pré-remplis) et au moins un article avec
@@ -183,12 +194,26 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
 
             <ST>Type de demande</ST>
             <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-              {(['bien_service', 'medical'] as TypeDA[]).map(t => (
-                <button key={t} onClick={() => set('type_da', t)} style={{ flex: 1, padding: 10, outline: form.type_da === t ? '2px solid #0B3C7A' : 'none', outlineOffset: form.type_da === t ? '-2px' : '0', borderRadius: 8, cursor: 'pointer', fontSize: 13.5, background: form.type_da === t ? '#0B3C7A' : '#eaf2fb', color: form.type_da === t ? '#fff' : '#5e6f85', fontWeight: form.type_da === t ? 600 : 400 }}>
-                  {t === 'medical' ? 'Médical & Consommables' : 'Bien / Service'}
-                </button>
-              ))}
+              {(['bien_service', 'medical'] as TypeDA[]).map(t => {
+                const desactive = t === 'medical' && !peutMedical
+                return (
+                  <button
+                    key={t}
+                    onClick={() => !desactive && set('type_da', t)}
+                    disabled={desactive}
+                    title={desactive ? 'Réservé au service Pharmacie' : undefined}
+                    style={{ flex: 1, padding: 10, outline: form.type_da === t ? '2px solid #0B3C7A' : 'none', outlineOffset: form.type_da === t ? '-2px' : '0', borderRadius: 8, cursor: desactive ? 'not-allowed' : 'pointer', fontSize: 13.5, background: form.type_da === t ? '#0B3C7A' : desactive ? '#f1f3f5' : '#eaf2fb', color: form.type_da === t ? '#fff' : desactive ? '#adb5bd' : '#5e6f85', fontWeight: form.type_da === t ? 600 : 400 }}
+                  >
+                    {LABEL_TYPE_DA[t]}
+                  </button>
+                )
+              })}
             </div>
+            {!peutMedical && (
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>
+                « Biens et Consommables Médicaux » est réservé au service Pharmacie.
+              </div>
+            )}
 
             <ST>Informations générales</ST>
             <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px', marginBottom: 4 }}>

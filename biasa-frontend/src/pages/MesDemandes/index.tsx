@@ -4,7 +4,7 @@ import BadgeMessages from '../../components/BadgeMessages'
 import { demandesApi } from '../../api/demandes'
 import { useAuthStore } from '../../store/auth'
 import type { DemandeAchat } from '../../types'
-import { STATUT_LABELS, URGENCE_LABELS, MOTIF_LABELS, STATUT_COLORS, URGENCE_COLORS } from '../../types'
+import { STATUT_LABELS, URGENCE_LABELS, MOTIF_LABELS, STATUT_COLORS, URGENCE_COLORS, LABEL_TYPE_DA } from '../../types'
 import FormDA from '../../components/FormDA'
 
 const fmt = (d: string) => new Date(d).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
@@ -182,7 +182,7 @@ export default function MesDemandesPage() {
                             ) : (
                               <>
                                 <td style={tdS}>{fmt(da.date_demande)}</td>
-                                <td style={tdS}>{da.type_da === 'medical' ? 'Médical' : 'Bien/Service'}</td>
+                                <td style={tdS}>{LABEL_TYPE_DA[da.type_da]}</td>
                                 <td style={tdS}>{MOTIF_LABELS[da.motif]}</td>
                                 <td style={tdS}><span style={{ color: URGENCE_COLORS[da.urgence], fontWeight: 600 }}>{URGENCE_LABELS[da.urgence]}</span></td>
                               </>

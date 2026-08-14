@@ -145,7 +145,12 @@ class MessageDAOut(BaseModel):
 class LigneCommandeIn(BaseModel):
     designation: str = Field(min_length=1, max_length=300)
     quantite: int = Field(gt=0)
-    prix_unitaire: float = Field(ge=0)
+    # Le prix n'est plus saisi au moment de la commande (décision du
+    # 2026-08-14) : on ne suit plus que ce qui a été réellement commandé
+    # (désignation/quantité), pas son coût. Champ gardé optionnel plutôt que
+    # supprimé pour ne pas casser la compatibilité avec les commandes déjà
+    # enregistrées avant ce changement.
+    prix_unitaire: float = Field(ge=0, default=0)
 
 
 class LigneCommandeOut(LigneCommandeIn):

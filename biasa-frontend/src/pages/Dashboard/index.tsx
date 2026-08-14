@@ -58,7 +58,7 @@ export default function DashboardPage() {
   const enCours = mesDa.filter(d => ['att_responsable','att_daf'].includes(d.statut)).length
   const approuvees = mesDa.filter(d => d.statut === 'approuvee').length
   const recues = mesDa.filter(d => d.statut === 'recue').length
-  const rejetees = mesDa.filter(d => d.statut === 'rejetee').length
+  const ouvertes = mesDa.filter(d => !['recue', 'rejetee'].includes(d.statut)).length
   const urgentes = aValider.filter(d => d.urgence === 'haute').length
 
   return (
@@ -87,7 +87,7 @@ export default function DashboardPage() {
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 18 }}>
           {(role === 'demandeur' || role === 'admin') && <>
-            <Stat label="Total" value={mesDa.length} />
+            <Stat label="Demandes ouvertes" value={ouvertes} />
             <Stat label="En cours de validation" value={enCours} color="#0B3C7A" />
             <Stat label="En traitement" value={approuvees} color="#0B3C7A" />
             <Stat label="Reçues" value={recues} color="#0B3C7A" />

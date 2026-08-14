@@ -3,7 +3,7 @@ import BadgeMessages from '../../components/BadgeMessages'
 import { useNavigate } from 'react-router-dom'
 import client from '../../api/client'
 import type { DemandeAchat } from '../../types'
-import { STATUT_LABELS, URGENCE_LABELS, MOTIF_LABELS, STATUT_COLORS, URGENCE_COLORS } from '../../types'
+import { STATUT_LABELS, URGENCE_LABELS, MOTIF_LABELS, STATUT_COLORS, URGENCE_COLORS, LABEL_TYPE_DA } from '../../types'
 
 const fmtD = (d: string) => new Date(d).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
 const dotColor = (s: string) => STATUT_COLORS[s as keyof typeof STATUT_COLORS] || '#888'
@@ -28,7 +28,7 @@ const FILTRES_PERIODE: [string, string][] = [
   ['tout', 'Tout'], ['jour', "Aujourd'hui"], ['semaine', 'Cette semaine'], ['mois', 'Ce mois'], ['annee', 'Cette année'],
 ]
 
-const fmtMontant = (n: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' FCFA'
+const fmtMontant = (n: number) => Math.round(n).toLocaleString('fr-FR') + ' FCFA'
 
 export default function ToutesDaPage() {
   const navigate = useNavigate()
@@ -99,7 +99,7 @@ export default function ToutesDaPage() {
       fmtD(da.date_demande),
       `${da.demandeur.prenom} ${da.demandeur.nom}`,
       da.service_demandeur,
-      da.type_da === 'medical' ? 'Médical' : 'Bien/Service',
+      LABEL_TYPE_DA[da.type_da],
       MOTIF_LABELS[da.motif],
       URGENCE_LABELS[da.urgence],
       STATUT_LABELS[da.statut],
@@ -169,7 +169,7 @@ export default function ToutesDaPage() {
           </div>
           <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 16px', minWidth: 200 }}>
             <div style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>Montant moyen par commande</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#0B2C5C' }}>{dasCommandees.length ? fmtMontant(montantMoyen) : '0,00 FCFA'}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0B2C5C' }}>{dasCommandees.length ? fmtMontant(montantMoyen) : '0 FCFA'}</div>
           </div>
         </div>
 
@@ -291,7 +291,7 @@ export default function ToutesDaPage() {
                       <td style={tdS}>{fmtD(da.date_demande)}</td>
                       <td style={tdS}>{da.demandeur.prenom} {da.demandeur.nom}</td>
                       <td style={tdS}>{da.service_demandeur}</td>
-                      <td className="no-print" style={tdS}>{da.type_da === 'medical' ? 'Médical' : 'Bien/Service'}</td>
+                      <td className="no-print" style={tdS}>{LABEL_TYPE_DA[da.type_da]}</td>
                       <td style={tdS}>{MOTIF_LABELS[da.motif]}</td>
                       <td className="no-print" style={tdS}><span style={{ color: URGENCE_COLORS[da.urgence], fontWeight: 600 }}>{URGENCE_LABELS[da.urgence]}</span></td>
                       <td style={tdS}>

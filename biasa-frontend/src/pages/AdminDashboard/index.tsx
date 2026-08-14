@@ -32,7 +32,7 @@ interface UsageStats {
   par_utilisateur: { utilisateur: string; connexions: number }[]
 }
 
-const fmtMontant = (n: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: 2 })
+const fmtMontant = (n: number) => Math.round(n).toLocaleString('fr-FR')
 const fmtMois = (cle: string) => {
   const [annee, mois] = cle.split('-')
   const noms = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
@@ -83,7 +83,7 @@ export default function AdminDashboardPage() {
         <div className="grid-6" style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 10, marginBottom: 14 }}>
           {[
             { label: 'Utilisateurs actifs', value: stats?.total_users ?? 0, sub: '' },
-            { label: 'Total DA', value: stats?.total_da ?? 0, sub: 'toutes périodes' },
+            { label: 'Demandes ouvertes', value: Math.max(0, (stats?.total_da ?? 0) - (stats?.da_recues ?? 0) - (stats?.da_rejetees ?? 0)), sub: 'en cours' },
             { label: 'En attente', value: stats?.da_attente ?? 0, sub: 'validation requise' },
             { label: 'Approuvées', value: stats?.da_approuvees ?? 0, sub: '' },
             { label: 'Reçues', value: stats?.da_recues ?? 0, sub: '' },
@@ -312,7 +312,7 @@ export default function AdminDashboardPage() {
                   { role: 'Demandeur', voir: 'Ses propres demandes uniquement', faire: 'Créer/soumettre une demande, confirmer la réception de sa commande, écrire des messages sur ses demandes' },
                   { role: 'Responsable', voir: 'Toutes les demandes (vision globale)', faire: 'Valider/rejeter les demandes en attente de son étape, sauf les siennes' },
                   { role: 'DAF', voir: 'Toutes les demandes (vision globale)', faire: 'Valider/rejeter après le responsable, sauf les siennes' },
-                  { role: 'Achats (acheteur)', voir: 'Toutes les demandes + le registre équipements', faire: 'Traiter les demandes approuvées (BC, commande + prix, livraison), confirmer réception, gérer le registre équipements' },
+                  { role: 'Achats (acheteur)', voir: 'Toutes les demandes + le registre équipements', faire: 'Traiter les demandes approuvées (BC, commande, livraison), confirmer réception, gérer le registre équipements' },
                   { role: 'Admin', voir: 'Tout, y compris journal d\'audit et statistiques', faire: 'Tout ce que font les autres rôles, plus gestion des utilisateurs, services, config email et déverrouillage de comptes' },
                 ].map(r => (
                   <tr key={r.role}>

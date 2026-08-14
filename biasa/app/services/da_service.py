@@ -107,6 +107,7 @@ async def demandes_a_valider(db: AsyncSession, user: Utilisateur) -> list[Demand
 async def creer_demande(db: AsyncSession, data: DemandeAchatCreate, user: Utilisateur) -> DemandeAchat:
     if data.type_da == TypeDA.BIEN_SERVICE and not (data.lieu_utilisation or "").strip():
         raise HTTPException(status_code=400, detail="Le lieu d'utilisation est requis pour une demande de type Bien / Service.")
+    _verifier_type_medical_autorise(data.type_da, data.service_demandeur, user)
     numero = await _generer_numero(db)
     da = DemandeAchat(
         numero=numero, demandeur_id=user.id,
@@ -380,6 +381,23 @@ def _verifier_role(user, role):
         raise HTTPException(status_code=403, detail="Rôle insuffisant")
 
 
+def _verifier_type_medical_autorise(type_da: TypeDA, service_demandeur: str | None, user: Utilisateur):
+    """Les demandes « Biens et Consommables Médicaux » passent par la Pharmacie,
+    qui centralise ce stock pour tous les services (y compris le labo) — on
+    évite ainsi deux circuits parallèles pour le même type de produit. Seul le
+    service Pharmacie (ou un admin) peut donc créer/renvoyer ce type de DA."""
+    if type_da != TypeDA.MEDICAL:
+        return
+    if user.role == RoleUtilisateur.ADMIN:
+        return
+    if (service_demandeur or "").strip().lower() == "pharmacie":
+        return
+    raise HTTPException(
+        status_code=400,
+        detail="Les demandes « Biens et Consommables Médicaux » sont réservées au service Pharmacie.",
+    )
+
+
 def _interdire_auto_validation(da: DemandeAchat, user: Utilisateur):
     """Un responsable/DAF ne peut pas valider ou rejeter sa propre demande,
     même s'il l'a soumise en tant que simple demandeur (n'importe quel compte
@@ -563,6 +581,7 @@ async def modifier_demande(
 
     if da.type_da == TypeDA.BIEN_SERVICE and not (da.lieu_utilisation or "").strip():
         raise HTTPException(status_code=400, detail="Le lieu d'utilisation est requis pour une demande de type Bien / Service.")
+    _verifier_type_medical_autorise(da.type_da, da.service_demandeur, user)
 
     if data.lignes is not None:
         # Remplacer les lignes existantes

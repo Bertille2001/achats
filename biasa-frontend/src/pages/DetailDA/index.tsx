@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { demandesApi, servicesApi } from '../../api/demandes'
 import { useAuthStore } from '../../store/auth'
 import type { DemandeAchat, FichierDA } from '../../types'
-import { STATUT_LABELS, URGENCE_LABELS, MOTIF_LABELS, ACTION_LABELS, STATUT_COLORS, URGENCE_COLORS } from '../../types'
+import { STATUT_LABELS, URGENCE_LABELS, MOTIF_LABELS, ACTION_LABELS, STATUT_COLORS, URGENCE_COLORS, LABEL_TYPE_DA } from '../../types'
 import client from '../../api/client'
 import { afficherAlerte } from '../../store/modal'
 
@@ -117,6 +117,21 @@ function telechargerPDF(daId: number, numero: string) {
       URL.revokeObjectURL(url)
     })
     .catch(() => afficherAlerte('Erreur lors de la génération du PDF'))
+}
+
+function exporterArticlesExcel(da: DemandeAchat) {
+  const echapper = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
+  const entetes = ['N° DA', 'Désignation', 'Quantité commandée']
+  const lignes = da.lignes_commande.map(l => [da.numero, l.designation, l.quantite])
+  // Même pattern que l'export du rapport global : point-virgule (Excel FR) + BOM UTF-8 (accents).
+  const csv = [entetes, ...lignes].map(l => l.map(echapper).join(';')).join('\r\n')
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `articles_commandes_${da.numero}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 function imprimerPDF(daId: number) {
@@ -400,7 +415,7 @@ export default function DetailDAPage() {
             {da.demandeur.prenom} {da.demandeur.nom} · {da.service_demandeur} · {fmtD(da.date_demande)}
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-            <Tag>{da.type_da === 'medical' ? 'Médical' : 'Bien/Service'}</Tag>
+            <Tag>{LABEL_TYPE_DA[da.type_da]}</Tag>
             <Tag>
               <span style={{ width: 5, height: 5, borderRadius: '50%', background: URGENCE_COLORS[da.urgence] }} />
               <span style={{ color: URGENCE_COLORS[da.urgence], fontWeight: 600 }}>{URGENCE_LABELS[da.urgence]}</span>
@@ -470,7 +485,7 @@ export default function DetailDAPage() {
 
               {onglet === 'info' && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
-                  <IF label="Type"      value={da.type_da === 'medical' ? 'Médical & Consommables' : 'Bien / Service'} />
+                  <IF label="Type"      value={LABEL_TYPE_DA[da.type_da]} />
                   <IF label="Motif"     value={MOTIF_LABELS[da.motif]} />
                   <IF label="Urgence"   value={URGENCE_LABELS[da.urgence]} />
                   {da.justification && <IF label="Justification" value={da.justification} full />}
@@ -685,7 +700,7 @@ export default function DetailDAPage() {
                         // Pré-remplit avec les lignes demandées comme point de départ,
                         // mais l'acheteur peut tout modifier avant de valider : ce qui
                         // est réellement commandé (quantité, désignation) peut différer
-                        // de la demande d'origine, et c'est ce prix-là qui compte.
+                        // de la demande d'origine. Le prix n'est plus demandé ici.
                         setLignesCommande(
                           da.lignes.length > 0
                             ? da.lignes.map(l => ({ designation: l.designation, quantite: l.quantite, prix_unitaire: 0 }))
@@ -744,17 +759,20 @@ export default function DetailDAPage() {
                   )}
                   {peutVoirDetailCommande && da.commande_le && da.lignes_commande.length > 0 && (
                     <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginBottom: 5, fontWeight: 500 }}>Ce qui a été réellement commandé</div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                        <div style={{ fontSize: 11.5, color: 'var(--text-secondary)', fontWeight: 500 }}>Ce qui a été réellement commandé</div>
+                        <button
+                          onClick={() => exporterArticlesExcel(da)}
+                          style={{ fontSize: 11, padding: '3px 9px', border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                        >
+                          ⇩ Excel
+                        </button>
+                      </div>
                       {da.lignes_commande.map(l => (
-                        <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 12.5, padding: '3px 0' }}>
-                          <span>{l.quantite} × {l.designation}</span>
-                          <span style={{ color: 'var(--text-secondary)' }}>{(l.quantite * l.prix_unitaire).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</span>
+                        <div key={l.id} style={{ fontSize: 12.5, padding: '3px 0' }}>
+                          {l.quantite} × {l.designation}
                         </div>
                       ))}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5, fontWeight: 700, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--border)', color: '#0B3C7A' }}>
-                        <span>Total dépensé</span>
-                        <span>{da.montant_total_commande.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</span>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -866,7 +884,7 @@ export default function DetailDAPage() {
           <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 12, padding: '20px 22px', width: 560, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto' as const }}>
             <div style={{ fontSize: 15.5, fontWeight: 600, color: '#0B3C7A', marginBottom: 4 }}>Commande passée : ce qui est réellement commandé</div>
             <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginBottom: 14 }}>
-              Ajuste les désignations/quantités si ce qui est commandé diffère de la demande initiale, et indique le prix unitaire de chaque ligne.
+              Ajuste les désignations/quantités si ce qui est commandé diffère de la demande initiale.
             </div>
 
             {lignesCommande.map((l, i) => (
@@ -881,13 +899,7 @@ export default function DetailDAPage() {
                   type="number" min={1} value={l.quantite}
                   onChange={e => setLignesCommande(ls => ls.map((x, j) => j === i ? { ...x, quantite: Number(e.target.value) } : x))}
                   placeholder="Qté"
-                  style={{ width: 62, fontSize: 13, padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 5, background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-                />
-                <input
-                  type="number" min={0} step="0.01" value={l.prix_unitaire}
-                  onChange={e => setLignesCommande(ls => ls.map((x, j) => j === i ? { ...x, prix_unitaire: Number(e.target.value) } : x))}
-                  placeholder="Prix unitaire"
-                  style={{ width: 100, fontSize: 13, padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 5, background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                  style={{ width: 72, fontSize: 13, padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 5, background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
                 />
                 <button
                   onClick={() => setLignesCommande(ls => ls.filter((_, j) => j !== i))}
@@ -900,18 +912,13 @@ export default function DetailDAPage() {
 
             <button
               onClick={() => setLignesCommande(ls => [...ls, { designation: '', quantite: 1, prix_unitaire: 0 }])}
-              style={{ fontSize: 12.5, color: '#0B3C7A', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', marginBottom: 10 }}
+              style={{ fontSize: 12.5, color: '#0B3C7A', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', marginBottom: 14 }}
             >+ Ajouter une ligne</button>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, color: '#0B3C7A', padding: '8px 0', borderTop: '1px solid var(--border)', marginBottom: 14 }}>
-              <span>Total</span>
-              <span>{lignesCommande.reduce((s, l) => s + l.quantite * l.prix_unitaire, 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</span>
-            </div>
 
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setShowCommandeForm(false)} disabled={al} style={{ padding: '7px 14px', fontSize: 13.5, border: '1px solid var(--border)', borderRadius: 6, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>Annuler</button>
               <button
-                disabled={al || lignesCommande.some(l => !l.designation.trim() || l.quantite <= 0 || l.prix_unitaire < 0)}
+                disabled={al || lignesCommande.some(l => !l.designation.trim() || l.quantite <= 0)}
                 onClick={async () => {
                   await act(() => demandesApi.marquerCommande(da.id, lignesCommande))
                   setShowCommandeForm(false)

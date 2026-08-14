@@ -41,3 +41,4 @@ export const URGENCE_COLORS: Record<UrgenceDA, string> = {
   faible: '#1e8f5f',
 }
 export const ACTION_LABELS: Record<ActionHistorique, string> = { creation: 'Demande créée', soumission: 'Soumise pour validation', validation_responsable: 'Validée par le responsable', rejet_responsable: 'Rejetée par le responsable', validation_daf: 'Validée par le DAF', rejet_daf: 'Rejetée par le DAF', traitement_acheteur: 'Prise en charge achats', confirmation_reception_demandeur: 'Réception confirmée par le demandeur', confirmation_reception_acheteur: 'Réception confirmée par le Service Achats', bc_cree: 'Bon de commande créé', commande_passee: 'Commande passée au fournisseur', livraison_recue: 'Livraison reçue' }
+export const LABEL_TYPE_DA: Record<TypeDA, string> = { medical: 'Biens et Consommables Médicaux', bien_service: 'Biens et Services Généraux' }

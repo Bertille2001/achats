@@ -122,7 +122,7 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
     story.append(Spacer(1, 0.3*cm))
 
     # 2. Titre centré en bleu gras
-    sous_titre = 'Articles Médicaux & Consommables' if is_medical else 'Bien & Service'
+    sous_titre = 'Biens et Consommables Médicaux' if is_medical else 'Biens et Services Généraux'
     story.append(Pb(
         f'FICHE DE DEMANDE D\'ACHAT ({sous_titre})',
         fontSize=11, textColor=BLEU, alignment=TA_CENTER
