@@ -54,6 +54,9 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
   const [lieux, setLieux] = useState<string[]>([])
   const [designations, setDesignations] = useState<string[]>([])
   const [unites, setUnites] = useState<string[]>([])
+  const [lieuxOuvert, setLieuxOuvert] = useState(false)
+  const [lieuLibre, setLieuLibre] = useState('')
+  const lieuxRef = useRef<HTMLDivElement>(null)
 
   // Rôles à vision globale (DOS, DAF, achats, admin...) : voient le
   // catalogue de désignations de tous les services. Les autres (demandeur,
@@ -85,8 +88,33 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [voitToutesLesDesignations, form.service_demandeur])
 
+  // Fermer le menu déroulant du lieu d'utilisation au clic en dehors.
+  useEffect(() => {
+    const surClicExterieur = (e: MouseEvent) => {
+      if (lieuxRef.current && !lieuxRef.current.contains(e.target as Node)) setLieuxOuvert(false)
+    }
+    document.addEventListener('mousedown', surClicExterieur)
+    return () => document.removeEventListener('mousedown', surClicExterieur)
+  }, [])
+
   const set = <K extends keyof DemandeAchatForm>(k: K, v: DemandeAchatForm[K]) =>
     setForm(f => ({ ...f, [k]: v }))
+
+  // Lieu d'utilisation : plusieurs services peuvent être sélectionnés, stockés
+  // en une seule chaîne séparée par des virgules (pas de changement de schéma
+  // côté backend — juste plus pratique à saisir/afficher qu'un champ libre).
+  const lieuxSelectionnes = form.lieu_utilisation ? form.lieu_utilisation.split(',').map(s => s.trim()).filter(Boolean) : []
+  const basculerLieu = (l: string) => {
+    const deja = lieuxSelectionnes.includes(l)
+    const nouveaux = deja ? lieuxSelectionnes.filter(x => x !== l) : [...lieuxSelectionnes, l]
+    set('lieu_utilisation', nouveaux.join(', '))
+  }
+  const ajouterLieuLibre = () => {
+    const v = lieuLibre.trim()
+    if (!v || lieuxSelectionnes.includes(v)) { setLieuLibre(''); return }
+    set('lieu_utilisation', [...lieuxSelectionnes, v].join(', '))
+    setLieuLibre('')
+  }
 
   const setLigne = (i: number, k: keyof LigneDAForm, v: string | number) =>
     setForm(f => { const lignes = [...f.lignes]; lignes[i] = { ...lignes[i], [k]: v }; return { ...f, lignes } })
@@ -337,9 +365,45 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
 
             {!isMed && <>
               <ST>Lieu d'utilisation</ST>
-              <FL label="Service, salle, localisation" required style={{ marginBottom: 12 }}>
-                <input value={form.lieu_utilisation} onChange={e => set('lieu_utilisation', e.target.value)} placeholder="Ex : Bloc opératoire" list="ac-lieux" style={inpStyle} required />
-                <datalist id="ac-lieux">{lieux.map(l => <option key={l} value={l} />)}</datalist>
+              <FL label="Service, salle, localisation (plusieurs possibles)" required style={{ marginBottom: 12 }}>
+                <div ref={lieuxRef} style={{ position: 'relative' }}>
+                  <div
+                    onClick={() => setLieuxOuvert(o => !o)}
+                    style={{ ...inpStyle, cursor: 'pointer', minHeight: 20, display: 'flex', flexWrap: 'wrap' as const, gap: 4, alignItems: 'center' }}
+                  >
+                    {lieuxSelectionnes.length === 0 ? (
+                      <span style={{ color: 'var(--text-muted)' }}>Sélectionner un ou plusieurs services…</span>
+                    ) : lieuxSelectionnes.map(l => (
+                      <span key={l} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, background: '#eaf2fb', color: '#0B3C7A', borderRadius: 4, padding: '2px 6px' }}>
+                        {l}
+                        <span
+                          onClick={e => { e.stopPropagation(); basculerLieu(l) }}
+                          style={{ cursor: 'pointer', fontWeight: 700 }}
+                        >×</span>
+                      </span>
+                    ))}
+                  </div>
+                  {lieuxOuvert && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, background: 'var(--bg-primary)', border: '1px solid rgba(0,0,0,0.15)', borderRadius: 8, boxShadow: '0 6px 20px rgba(0,0,0,0.12)', zIndex: 20, maxHeight: 240, overflowY: 'auto' }}>
+                      {lieux.map(l => (
+                        <label key={l} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', fontSize: 13, cursor: 'pointer' }}>
+                          <input type="checkbox" checked={lieuxSelectionnes.includes(l)} onChange={() => basculerLieu(l)} />
+                          {l}
+                        </label>
+                      ))}
+                      <div style={{ display: 'flex', gap: 6, padding: '8px 10px', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
+                        <input
+                          value={lieuLibre}
+                          onChange={e => setLieuLibre(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); ajouterLieuLibre() } }}
+                          placeholder="Autre lieu…"
+                          style={{ flex: 1, fontSize: 12.5, padding: '5px 7px', border: '1px solid rgba(0,0,0,0.15)', borderRadius: 5, background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+                        />
+                        <button type="button" onClick={ajouterLieuLibre} style={{ fontSize: 12.5, padding: '5px 10px', border: 'none', borderRadius: 5, background: '#0B3C7A', color: '#fff', cursor: 'pointer' }}>+</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </FL>
             </>}
 

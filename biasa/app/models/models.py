@@ -120,7 +120,10 @@ class DemandeAchat(Base):
     date_peremption_min: Mapped[str | None] = mapped_column(String(50))
     fournisseur_suggere: Mapped[str | None] = mapped_column(String(200))
     autres_specs: Mapped[str | None] = mapped_column(Text)
-    lieu_utilisation: Mapped[str | None] = mapped_column(String(200))
+    # Plusieurs services peuvent être sélectionnés côté formulaire (liste
+    # déroulante multi-sélection) — stockés en une seule chaîne séparée par
+    # des virgules, d'où une taille plus généreuse que les autres champs.
+    lieu_utilisation: Mapped[str | None] = mapped_column(String(1000))
     soumise_le: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     mise_a_jour_le: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
