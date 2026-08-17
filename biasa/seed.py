@@ -5,8 +5,8 @@ from app.core.security import hash_password
 
 COMPTES_TEST = [
     {"nom": "Bertille", "prenom": "", "username": "bertille", "email": None, "mot_de_passe": "biasa2026", "poste": "Infirmier chef", "service": "Urgences", "role": RoleUtilisateur.DEMANDEUR},
-    {"nom": "Komi", "prenom": "", "username": "komi", "email": None, "mot_de_passe": "biasa2026", "poste": "Médecin responsable", "service": "Urgences", "role": RoleUtilisateur.RESPONSABLE},
-    {"nom": "Théophile", "prenom": "", "username": "theophile", "email": None, "mot_de_passe": "biasa2026", "poste": "Directeur des Opérations et Services (DOS)", "service": "Direction", "role": RoleUtilisateur.DAF},
+    {"nom": "Komi", "prenom": "", "username": "komi", "email": None, "mot_de_passe": "biasa2026", "poste": "DOS (Directeur des Opérations et Services)", "service": "Urgences", "role": RoleUtilisateur.RESPONSABLE},
+    {"nom": "Théophile", "prenom": "", "username": "theophile", "email": None, "mot_de_passe": "biasa2026", "poste": "Directeur Administratif et Financier", "service": "Direction", "role": RoleUtilisateur.DAF},
     {"nom": "Moïse", "prenom": "", "username": "moise", "email": None, "mot_de_passe": "biasa2026", "poste": "Acheteur", "service": "Achats", "role": RoleUtilisateur.ACHETEUR},
     {"nom": "Mable", "prenom": "", "username": "mable", "email": None, "mot_de_passe": "biasa2026", "poste": "Administrateur", "service": "IT", "role": RoleUtilisateur.ADMIN},
 ]

@@ -176,40 +176,66 @@ async def _enregistrer_designations_catalogue(db: AsyncSession, designations: li
         db.add(ValeurPredéfinie(categorie='designation', valeur=valeur, service=service))
 
 
-async def soumettre_demande(db: AsyncSession, da_id: int, user: Utilisateur) -> DemandeAchat:
-    da = await _get_da_or_404(db, da_id)
-    if da.demandeur_id != user.id:
-        raise HTTPException(status_code=403, detail="Accès refusé")
-    if da.statut not in (StatutDA.BROUILLON, StatutDA.REJETEE):
-        raise HTTPException(status_code=400, detail="Cette demande ne peut pas être soumise")
-    # Une DA rejetée qui est soumise à nouveau → on marque deja_renvoye pour
-    # empêcher un 2ème renvoi après un 2ème rejet éventuel.
-    if da.statut == StatutDA.BROUILLON and da.deja_renvoye is False:
-        pass  # premier envoi ou renvoi déjà géré
-    if not da.deja_renvoye and da.statut == StatutDA.REJETEE:
-        da.deja_renvoye = True
-    da.statut = StatutDA.ATT_RESPONSABLE
-    da.soumise_le = datetime.utcnow()
-    _ajouter_historique(db, da.id, user.id, ActionHistorique.SOUMISSION)
-    await db.flush()
-    # Charger les données nécessaires avant la tâche de fond
-    responsables = await db.execute(
-        select(Utilisateur).where(Utilisateur.role == RoleUtilisateur.RESPONSABLE, Utilisateur.actif == True)
-    )
+async def _notifier_validateurs(db: AsyncSession, role: RoleUtilisateur, da: DemandeAchat, demandeur_nom: str) -> None:
+    """Envoie l'email de notification aux personnes actives ayant ce rôle,
+    en arrière-plan (ne bloque pas la réponse)."""
+    validateurs = await db.execute(select(Utilisateur).where(Utilisateur.role == role, Utilisateur.actif == True))
     numero = da.numero
-    demandeur_nom = f"{user.prenom} {user.nom}"
     urgence = da.urgence.value
-    emails_resp = [resp.email for resp in responsables.scalars() if resp.email]
+    emails = [v.email for v in validateurs.scalars() if v.email]
 
-    # Email en arrière-plan — ne bloque plus la réponse
     async def envoyer_emails():
-        for email in emails_resp:
+        for email in emails:
             try:
                 await notifier_validateur(email, numero, demandeur_nom, urgence)
             except Exception:
                 pass
 
     asyncio.create_task(envoyer_emails())
+
+
+async def soumettre_demande(db: AsyncSession, da_id: int, user: Utilisateur) -> DemandeAchat:
+    """Circuit normal : Responsable/DOS puis DAF valident chacun leur tour.
+    Deux cas particuliers, personne ne pouvant valider sa propre demande :
+    - le DOS soumet sa propre demande → l'étape DOS est sautée, elle part
+      directement en attente du DAF, qui valide pour lui ;
+    - le DAF soumet sa propre demande → il est au sommet de la hiérarchie de
+      validation, personne au-dessus pour la valider : elle est directement
+      approuvée (auto-validation des deux étapes, tracée dans l'historique
+      et sur le PDF comme n'importe quelle validation)."""
+    da = await _get_da_or_404(db, da_id)
+    if da.demandeur_id != user.id:
+        raise HTTPException(status_code=403, detail="Accès refusé")
+    if da.statut not in (StatutDA.BROUILLON, StatutDA.REJETEE):
+        raise HTTPException(status_code=400, detail="Cette demande ne peut pas être soumise")
+    if not da.deja_renvoye and da.statut == StatutDA.REJETEE:
+        da.deja_renvoye = True
+    da.soumise_le = datetime.utcnow()
+    demandeur_nom = f"{user.prenom} {user.nom}"
+
+    if user.role == RoleUtilisateur.DAF:
+        note = "Auto-approuvée : demande soumise par le DAF, sommet de la hiérarchie de validation — aucune validation supplémentaire n'est requise."
+        _ajouter_historique(db, da.id, user.id, ActionHistorique.SOUMISSION, note)
+        da.statut = StatutDA.APPROUVEE
+        da.responsable_id = user.id
+        da.daf_id = user.id
+        _ajouter_historique(db, da.id, user.id, ActionHistorique.VALIDATION_RESPONSABLE, note)
+        _ajouter_historique(db, da.id, user.id, ActionHistorique.VALIDATION_DAF, note)
+        await db.flush()
+        return await _get_da_or_404(db, da_id)
+
+    if user.role == RoleUtilisateur.RESPONSABLE:
+        note = "Étape DOS sautée : demande soumise par le DOS lui-même, validée directement par le DAF."
+        _ajouter_historique(db, da.id, user.id, ActionHistorique.SOUMISSION, note)
+        da.statut = StatutDA.ATT_DAF
+        await db.flush()
+        await _notifier_validateurs(db, RoleUtilisateur.DAF, da, demandeur_nom)
+        return await _get_da_or_404(db, da_id)
+
+    _ajouter_historique(db, da.id, user.id, ActionHistorique.SOUMISSION)
+    da.statut = StatutDA.ATT_RESPONSABLE
+    await db.flush()
+    await _notifier_validateurs(db, RoleUtilisateur.RESPONSABLE, da, demandeur_nom)
     return await _get_da_or_404(db, da_id)
 
 
@@ -239,7 +265,7 @@ async def valider_responsable(db: AsyncSession, da_id: int, user: Utilisateur, c
             except Exception:
                 pass
         try:
-            await notifier_demandeur(demandeur_email, numero, "validée par votre responsable", comm)
+            await notifier_demandeur(demandeur_email, numero, "validée par votre DOS", comm)
         except Exception:
             pass
 
@@ -263,7 +289,7 @@ async def rejeter_responsable(db: AsyncSession, da_id: int, user: Utilisateur, c
 
     async def envoyer_email():
         try:
-            await notifier_demandeur(demandeur_email, numero, "rejetée par votre responsable", commentaire)
+            await notifier_demandeur(demandeur_email, numero, "rejetée par votre DOS", commentaire)
         except Exception:
             pass
 
@@ -288,7 +314,7 @@ async def valider_daf(db: AsyncSession, da_id: int, user: Utilisateur, commentai
 
     async def envoyer_email():
         try:
-            await notifier_demandeur(demandeur_email, numero, "approuvée par le DOS", comm)
+            await notifier_demandeur(demandeur_email, numero, "approuvée par le DAF", comm)
         except Exception:
             pass
 
@@ -312,7 +338,7 @@ async def rejeter_daf(db: AsyncSession, da_id: int, user: Utilisateur, commentai
 
     async def envoyer_email():
         try:
-            await notifier_demandeur(demandeur_email, numero, "rejetée par le DOS", commentaire)
+            await notifier_demandeur(demandeur_email, numero, "rejetée par le DAF", commentaire)
         except Exception:
             pass
 

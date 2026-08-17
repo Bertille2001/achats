@@ -55,7 +55,7 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
   const [designations, setDesignations] = useState<string[]>([])
   const [unites, setUnites] = useState<string[]>([])
 
-  // Rôles à vision globale (DOS, responsable, achats, admin...) : voient le
+  // Rôles à vision globale (DOS, DAF, achats, admin...) : voient le
   // catalogue de désignations de tous les services. Les autres (demandeur,
   // pharmacien) ne voient que celui de leur propre service — plus les
   // valeurs déjà utilisées par ce service et les valeurs globales.

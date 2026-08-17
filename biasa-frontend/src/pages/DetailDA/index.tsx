@@ -628,8 +628,8 @@ export default function DetailDAPage() {
               <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 16 }}>
                 {[
                   { label: 'Soumission',  done: !!da.soumise_le },
-                  { label: 'Responsable', done: ['att_daf','approuvee','rejetee','recue'].includes(da.statut) && da.statut !== 'att_responsable' },
-                  { label: 'DOS',         done: da.statut === 'approuvee' || da.statut === 'recue' },
+                  { label: 'DOS',         done: ['att_daf','approuvee','rejetee','recue'].includes(da.statut) && da.statut !== 'att_responsable' },
+                  { label: 'DAF',         done: da.statut === 'approuvee' || da.statut === 'recue' },
                   { label: 'Réception',  done: da.statut === 'recue' },
                 ].map((s, i, arr) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', flex: i < arr.length - 1 ? 1 : undefined }}>

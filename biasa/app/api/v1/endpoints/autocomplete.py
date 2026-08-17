@@ -67,7 +67,7 @@ async def lieux(db: AsyncSession = Depends(get_db), _=Depends(get_current_user))
 
 @router.get("/designations")
 async def designations(service: str | None = None, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    """Sans `service` (rôles à vision globale : DOS, responsable, achats,
+    """Sans `service` (rôles à vision globale : DOS, DAF, achats,
     admin...) : toutes les désignations, tous services confondus. Avec
     `service` (typiquement un demandeur) : catalogue de ce service, plus les
     désignations déjà utilisées dans les demandes de ce service, plus les
