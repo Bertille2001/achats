@@ -142,6 +142,14 @@ class DemandeAchat(Base):
     livre_par_id: Mapped[int | None] = mapped_column(ForeignKey("utilisateurs.id"), nullable=True)
     livre_le: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     deja_renvoye: Mapped[bool] = mapped_column(Boolean, default=False)  # True = déjà renvoyé une fois après un rejet
+    # Quand une demande rejetée est corrigée, on crée une TOUTE NOUVELLE
+    # demande (voir da_service.corriger_et_renvoyer_demande) plutôt que de
+    # modifier l'ancienne en place — l'ancienne reste visible telle quelle,
+    # comme trace de ce qui a été refusé. Ce champ, sur la NOUVELLE demande,
+    # pointe vers l'ancienne. Pas de relationship() ORM ici (auto-référence :
+    # on reste sur une simple colonne + requêtes ciblées côté service pour
+    # éviter la complexité d'un mapper auto-référentiel).
+    corrige_da_id: Mapped[int | None] = mapped_column(ForeignKey("demandes_achat.id"), nullable=True)
 
     demandeur: Mapped["Utilisateur"] = relationship(back_populates="demandes", foreign_keys=[demandeur_id])
     lignes: Mapped[list["LigneDA"]] = relationship(back_populates="demande", cascade="all, delete-orphan", order_by="LigneDA.numero_ligne")

@@ -31,10 +31,12 @@ export default function ModifierDAPage() {
         <button onClick={() => navigate(`/demandes/${id}`)} style={{ fontSize: 13.5, color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Retour</button>
         <span style={{ color: 'var(--border)' }}>|</span>
         <div>
-          <div style={{ fontSize: 14.5, fontWeight: 500 }}>Modifier la demande {da.numero}</div>
+          <div style={{ fontSize: 14.5, fontWeight: 500 }}>
+            {da.statut === 'rejetee' ? `Corriger la demande ${da.numero}` : `Modifier la demande ${da.numero}`}
+          </div>
           {da.statut === 'rejetee' && (
             <div style={{ fontSize: 12.5, color: '#a32d2d', marginTop: 2 }}>
-              Demande rejetée : vous pouvez la corriger et la renvoyer (une seule fois possible).
+              Demande rejetée : la correction crée une nouvelle demande (renvoyée automatiquement) — celle-ci reste inchangée, comme trace du refus. Possible une seule fois.
             </div>
           )}
         </div>
@@ -68,13 +70,18 @@ export default function ModifierDAPage() {
           }}
           onSubmit={async (form) => {
             try {
-              await demandesApi.modifier(Number(id), form)
-              navigate(`/demandes/${id}`)
+              if (da.statut === 'rejetee') {
+                const nouvelle = await demandesApi.corriger(Number(id), form)
+                navigate(`/demandes/${nouvelle.id}`)
+              } else {
+                await demandesApi.modifier(Number(id), form)
+                navigate(`/demandes/${id}`)
+              }
             } catch (e: any) {
-              setErreur(e.response?.data?.detail || 'Erreur lors de la modification')
+              setErreur(e.response?.data?.detail || 'Erreur lors de l\'enregistrement')
             }
           }}
-          labelBouton="Enregistrer les modifications"
+          labelBouton={da.statut === 'rejetee' ? 'Corriger et renvoyer' : 'Enregistrer les modifications'}
         />
       </div>
     </>

@@ -261,6 +261,12 @@ async def telecharger(da_id: int, fichier_id: int, db: AsyncSession = Depends(ge
 
 @router.put("/{da_id}", response_model=DemandeAchatOut)
 async def modifier_demande(da_id: int, data: DemandeAchatUpdate, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
-    """Modifier une DA en brouillon ou rejetée. Après rejet, le demandeur peut
-    corriger et renvoyer une seule fois."""
+    """Modifier une DA encore en brouillon (jamais soumise), en place."""
     return await da_service.modifier_demande(db, da_id, data, current_user)
+
+
+@router.post("/{da_id}/corriger", response_model=DemandeAchatOut, status_code=201)
+async def corriger_et_renvoyer(da_id: int, data: DemandeAchatCreate, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+    """Corriger une DA rejetée : crée une nouvelle demande (pas de modification
+    en place), automatiquement soumise. L'ancienne demande rejetée reste inchangée."""
+    return await da_service.corriger_et_renvoyer_demande(db, da_id, data, current_user)

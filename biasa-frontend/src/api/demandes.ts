@@ -19,6 +19,7 @@ export const demandesApi = {
   envoyerMessage: async (id: number, texte: string): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/messages`, { texte }); return data },
   uploadFichier: async (id: number, file: File): Promise<FichierDA> => { const form = new FormData(); form.append('file', file); const { data } = await client.post<FichierDA>(`/demandes/${id}/fichiers`, form, { headers: { 'Content-Type': 'multipart/form-data' } }); return data },
   modifier: async (id: number, data: Partial<DemandeAchatForm>): Promise<DemandeAchat> => { const { data: d } = await client.put<DemandeAchat>(`/demandes/${id}`, data); return d },
+  corriger: async (id: number, form: DemandeAchatForm): Promise<DemandeAchat> => { const { data } = await client.post<DemandeAchat>(`/demandes/${id}/corriger`, form); return data },
   toutesDemandesAcheteur: async (): Promise<DemandeAchat[]> => { const { data } = await client.get<DemandeAchat[]>('/demandes/toutes'); return data },
   urlTelechargement: (daId: number, fichierId: number): string => `/api/v1/demandes/${daId}/fichiers/${fichierId}/telecharger`,
   urlApercu: (daId: number, fichierId: number): string => `/api/v1/demandes/${daId}/fichiers/${fichierId}/apercu`,

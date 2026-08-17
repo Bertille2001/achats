@@ -225,6 +225,13 @@ class DemandeAchatOut(BaseModel):
     commande_le: Optional[datetime] = None
     livre_le: Optional[datetime] = None
     deja_renvoye: bool = False
+    # Lien entre une demande rejetée et sa correction (voir
+    # da_service.corriger_et_renvoyer_demande) — calculés à la volée, pas des
+    # colonnes en base (sauf corrige_da_id).
+    corrige_da_id: Optional[int] = None
+    corrige_da_numero: Optional[str] = None
+    corrigee_par_id: Optional[int] = None
+    corrigee_par_numero: Optional[str] = None
     demandeur: UtilisateurOut
     lignes: list[LigneDAOut] = []
     fichiers: list[FichierDAOut] = []

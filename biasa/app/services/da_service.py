@@ -61,7 +61,27 @@ async def _get_da_or_404(db: AsyncSession, da_id: int) -> DemandeAchat:
     da = await get_da_by_id(db, da_id)
     if not da:
         raise HTTPException(status_code=404, detail="Demande introuvable")
+    await _attacher_liens_correction(db, da)
     return da
+
+
+async def _attacher_liens_correction(db: AsyncSession, da: DemandeAchat) -> None:
+    """Attache en attributs transitoires (pas des colonnes) le lien entre une
+    demande et sa correction, dans les deux sens : da.corrige_da_numero (si
+    cette demande corrige une ancienne demande rejetée) et
+    da.corrigee_par_id/numero (si cette demande, une fois rejetée, a été
+    corrigée par une nouvelle)."""
+    if da.corrige_da_id:
+        r = await db.execute(select(DemandeAchat.numero).where(DemandeAchat.id == da.corrige_da_id))
+        da.corrige_da_numero = r.scalar_one_or_none()
+    else:
+        da.corrige_da_numero = None
+    r2 = await db.execute(
+        select(DemandeAchat.id, DemandeAchat.numero).where(DemandeAchat.corrige_da_id == da.id)
+    )
+    ligne = r2.first()
+    da.corrigee_par_id = ligne[0] if ligne else None
+    da.corrigee_par_numero = ligne[1] if ligne else None
 
 
 async def mes_demandes(db: AsyncSession, user_id: int) -> list[DemandeAchat]:
@@ -575,23 +595,19 @@ async def toutes_les_demandes_acheteur(db: AsyncSession) -> list[DemandeAchat]:
 async def modifier_demande(
     db: AsyncSession, da_id: int, data: "DemandeAchatUpdate", user: Utilisateur
 ) -> DemandeAchat:
-    """Modification permise uniquement si la DA est en brouillon ou rejetée,
-    et uniquement par le demandeur d'origine ou l'admin. Une DA rejetée qui est
-    modifiée repasse en brouillon pour être soumise de nouveau — le demandeur
-    ne peut renvoyer qu'une seule fois après un rejet (champ deja_renvoye)."""
+    """Modification en place permise uniquement si la DA est encore en
+    brouillon (jamais soumise), et uniquement par le demandeur d'origine ou
+    l'admin. Une DA REJETÉE ne passe plus par ici : voir
+    corriger_et_renvoyer_demande, qui crée une nouvelle demande au lieu de
+    modifier celle-ci — l'historique de ce qui a été refusé reste intact."""
     from app.schemas.schemas import DemandeAchatUpdate
     da = await _get_da_or_404(db, da_id)
     if da.demandeur_id != user.id and user.role != RoleUtilisateur.ADMIN:
         raise HTTPException(status_code=403, detail="Seul le demandeur peut modifier sa demande.")
-    if da.statut not in (StatutDA.BROUILLON, StatutDA.REJETEE):
+    if da.statut != StatutDA.BROUILLON:
         raise HTTPException(
             status_code=400,
-            detail="Cette demande ne peut plus être modifiée (elle est déjà en cours de validation ou traitée)."
-        )
-    if da.statut == StatutDA.REJETEE and da.deja_renvoye:
-        raise HTTPException(
-            status_code=400,
-            detail="Une demande rejetée ne peut être renvoyée qu'une seule fois."
+            detail="Cette demande ne peut plus être modifiée directement (elle est déjà soumise, ou rejetée — utilisez « Corriger et renvoyer »)."
         )
 
     if data.service_demandeur is not None: da.service_demandeur = data.service_demandeur
@@ -626,10 +642,30 @@ async def modifier_demande(
             ))
         await _enregistrer_designations_catalogue(db, [l.designation for l in data.lignes], da.service_demandeur)
 
-    # Si la DA était rejetée, elle repasse en brouillon pour être soumise à nouveau
-    if da.statut == StatutDA.REJETEE:
-        da.statut = StatutDA.BROUILLON
-        _ajouter_historique(db, da.id, user.id, ActionHistorique.CREATION, "Demande modifiée après rejet")
-
     await db.flush()
     return await _get_da_or_404(db, da_id)
+
+
+async def corriger_et_renvoyer_demande(
+    db: AsyncSession, da_id: int, data: DemandeAchatCreate, user: Utilisateur
+) -> DemandeAchat:
+    """Corrige une demande REJETÉE en créant une TOUTE NOUVELLE demande
+    (nouveau numéro, nouvel historique, nouveau circuit de validation) au
+    lieu de modifier l'ancienne en place — celle-ci reste visible telle
+    quelle, avec son statut « rejetée » et le motif du refus, comme trace.
+    Ne peut être fait qu'une seule fois par demande rejetée (deja_renvoye) ;
+    la nouvelle demande est automatiquement soumise (« corriger et renvoyer »
+    implique l'envoi, pas juste une sauvegarde)."""
+    da = await _get_da_or_404(db, da_id)
+    if da.demandeur_id != user.id and user.role != RoleUtilisateur.ADMIN:
+        raise HTTPException(status_code=403, detail="Seul le demandeur peut corriger sa demande.")
+    if da.statut != StatutDA.REJETEE:
+        raise HTTPException(status_code=400, detail="Seule une demande rejetée peut être corrigée et renvoyée.")
+    if da.deja_renvoye:
+        raise HTTPException(status_code=400, detail="Cette demande a déjà été corrigée et renvoyée une fois.")
+
+    nouvelle = await creer_demande(db, data, user)
+    nouvelle.corrige_da_id = da.id
+    da.deja_renvoye = True
+    await db.flush()
+    return await soumettre_demande(db, nouvelle.id, user)

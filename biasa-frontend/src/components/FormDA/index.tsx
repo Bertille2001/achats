@@ -131,25 +131,30 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
     return ''
   }
 
-  const handleSubmit = async () => {
-    setLoading(true)
+  const [loadingBrouillon, setLoadingBrouillon] = useState(false)
+
+  const handleSubmit = async (soumettre = true) => {
+    (soumettre ? setLoading : setLoadingBrouillon)(true)
     try {
       const lignesNettoyees = lignesValides.map((l, i) => ({ ...l, numero_ligne: i + 1 }))
       const formNettoye = { ...form, lignes: lignesNettoyees }
       if (onSubmitExterieur) {
-        // Mode modification — pas de création ni de soumission automatique
+        // Mode modification/correction — géré entièrement par l'appelant
         await onSubmitExterieur(formNettoye)
       } else {
-        // Mode création normal
+        // Mode création normal : on crée toujours la DA (statut brouillon),
+        // et on ne la soumet que si demandé — sinon elle reste en brouillon,
+        // modifiable plus tard depuis « Mes demandes » sans tout retaper.
         const da = await demandesApi.creer(formNettoye)
         for (const fichier of fichiers) await demandesApi.uploadFichier(da.id, fichier)
-        await demandesApi.soumettre(da.id)
+        if (soumettre) await demandesApi.soumettre(da.id)
         onSuccess?.()
       }
     } catch (e: any) {
       afficherAlerte(e.response?.data?.detail || 'Erreur lors de la soumission')
     } finally {
       setLoading(false)
+      setLoadingBrouillon(false)
     }
   }
 
@@ -189,9 +194,21 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
           </div>
           <div style={foot}>
             <button onClick={() => setEtape('form')} style={{ padding: '8px 16px', fontSize: 13.5, border: '1px solid rgba(0,0,0,0.12)', borderRadius: 6, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>← Retour</button>
-            <button onClick={handleSubmit} disabled={loading} style={{ padding: '8px 20px', fontSize: 13.5, border: 'none', borderRadius: 6, background: loading ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
-              {loading ? 'Envoi…' : 'Confirmer et soumettre'}
-            </button>
+            <div style={{ display: 'flex', gap: 7 }}>
+              {!onSubmitExterieur && (
+                <button
+                  onClick={() => handleSubmit(false)}
+                  disabled={loading || loadingBrouillon}
+                  title="Enregistre la demande sans l'envoyer — tu pourras la reprendre plus tard depuis « Mes demandes »"
+                  style={{ padding: '8px 16px', fontSize: 13.5, border: '1px solid #0B3C7A', borderRadius: 6, background: 'transparent', color: '#0B3C7A', cursor: (loading || loadingBrouillon) ? 'not-allowed' : 'pointer', fontWeight: 500 }}
+                >
+                  {loadingBrouillon ? 'Enregistrement…' : 'Enregistrer comme brouillon'}
+                </button>
+              )}
+              <button onClick={() => handleSubmit(true)} disabled={loading || loadingBrouillon} style={{ padding: '8px 20px', fontSize: 13.5, border: 'none', borderRadius: 6, background: loading ? '#9ab4e8' : '#0B3C7A', color: '#fff', cursor: (loading || loadingBrouillon) ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
+                {loading ? 'Envoi…' : 'Confirmer et soumettre'}
+              </button>
+            </div>
           </div>
         </div>
       ) : (

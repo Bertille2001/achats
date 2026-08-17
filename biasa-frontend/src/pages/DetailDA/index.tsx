@@ -376,6 +376,17 @@ export default function DetailDAPage() {
             {da.statut === 'rejetee' ? 'Corriger et renvoyer' : 'Modifier'}
           </button>
         )}
+        {/* Brouillon : le demandeur peut soumettre quand il est prêt (la
+            demande reste modifiable/en attente tant qu'il ne clique pas). */}
+        {utilisateur?.id === da.demandeur.id && da.statut === 'brouillon' && (
+          <button
+            disabled={al}
+            onClick={() => act(() => demandesApi.soumettre(da.id))}
+            style={{ ...btnStyle, background: '#0B3C7A', color: '#fff', fontWeight: 600, border: 'none' }}
+          >
+            Soumettre →
+          </button>
+        )}
         {estAcheteur && (
           <>
             <button onClick={() => telechargerPDF(da.id, da.numero)} style={btnStyle}>↓ Télécharger PDF</button>
@@ -403,6 +414,23 @@ export default function DetailDAPage() {
           </button>
           {resultatVerif === true && <span style={{ fontSize: 12.5, fontWeight: 600, color: '#1e8f5f' }}>✓ Document authentique, non modifié</span>}
           {resultatVerif === false && <span style={{ fontSize: 12.5, fontWeight: 600, color: '#c0392b' }}>✗ Code invalide — le document ne correspond pas aux données actuelles</span>}
+        </div>
+      )}
+
+      {da.corrigee_par_numero && (
+        <div style={{ padding: '10px 18px', borderBottom: '1px solid var(--border)', background: '#fff8e6', fontSize: 12.5, color: '#8a6d1a' }}>
+          Cette demande rejetée a été corrigée et renvoyée sous une nouvelle référence :{' '}
+          <span style={{ fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate(`/demandes/${da.corrigee_par_id}`)}>
+            {da.corrigee_par_numero}
+          </span>
+        </div>
+      )}
+      {da.corrige_da_numero && (
+        <div style={{ padding: '10px 18px', borderBottom: '1px solid var(--border)', background: '#eaf2fb', fontSize: 12.5, color: '#0B3C7A' }}>
+          Cette demande corrige la demande rejetée{' '}
+          <span style={{ fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate(`/demandes/${da.corrige_da_id}`)}>
+            {da.corrige_da_numero}
+          </span>
         </div>
       )}
 
