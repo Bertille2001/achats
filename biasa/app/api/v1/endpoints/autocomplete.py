@@ -10,8 +10,11 @@ from app.models.models import DemandeAchat, Utilisateur, ValeurPredéfinie
 router = APIRouter(prefix="/autocomplete", tags=["Autocomplétion"])
 
 
-async def _valeurs_predefinies(db: AsyncSession, categorie: str) -> set[str]:
-    r = await db.execute(select(ValeurPredéfinie.valeur).where(ValeurPredéfinie.categorie == categorie))
+async def _valeurs_predefinies(db: AsyncSession, categorie: str, service: str | None = None) -> set[str]:
+    query = select(ValeurPredéfinie.valeur).where(ValeurPredéfinie.categorie == categorie)
+    if service:
+        query = query.where((ValeurPredéfinie.service == service) | (ValeurPredéfinie.service.is_(None)))
+    r = await db.execute(query)
     return set(r.scalars().all())
 
 
@@ -63,10 +66,22 @@ async def lieux(db: AsyncSession = Depends(get_db), _=Depends(get_current_user))
 
 
 @router.get("/designations")
-async def designations(db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    from app.models.models import LigneDA
-    r = await db.execute(select(distinct(LigneDA.designation)).where(LigneDA.designation != None))
-    predefinis = await _valeurs_predefinies(db, 'designation')
+async def designations(service: str | None = None, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
+    """Sans `service` (rôles à vision globale : DOS, responsable, achats,
+    admin...) : toutes les désignations, tous services confondus. Avec
+    `service` (typiquement un demandeur) : catalogue de ce service, plus les
+    désignations déjà utilisées dans les demandes de ce service, plus les
+    valeurs globales (sans service précis)."""
+    from app.models.models import LigneDA, DemandeAchat
+    predefinis = await _valeurs_predefinies(db, 'designation', service)
+    if service:
+        r = await db.execute(
+            select(distinct(LigneDA.designation))
+            .join(DemandeAchat, LigneDA.demande_id == DemandeAchat.id)
+            .where(LigneDA.designation != None, DemandeAchat.service_demandeur == service)
+        )
+    else:
+        r = await db.execute(select(distinct(LigneDA.designation)).where(LigneDA.designation != None))
     vals = set(r.scalars().all()) | predefinis
     return sorted([v for v in vals if v])
 

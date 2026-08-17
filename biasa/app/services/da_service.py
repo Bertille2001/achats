@@ -10,7 +10,8 @@ import aiofiles
 
 from app.models.models import (
     DemandeAchat, LigneDA, FichierDA, HistoriqueValidation,
-    StatutDA, ActionHistorique, RoleUtilisateur, Utilisateur, Service, MessageDA, LigneCommande, TypeDA
+    StatutDA, ActionHistorique, RoleUtilisateur, Utilisateur, Service, MessageDA, LigneCommande, TypeDA,
+    ValeurPredéfinie,
 )
 from app.schemas.schemas import DemandeAchatCreate
 from app.core.config import UPLOAD_PATH
@@ -125,9 +126,34 @@ async def creer_demande(db: AsyncSession, data: DemandeAchatCreate, user: Utilis
     await db.flush()
     for ligne_data in data.lignes:
         db.add(LigneDA(demande_id=da.id, **ligne_data.model_dump()))
+    await _enregistrer_designations_catalogue(db, [l.designation for l in data.lignes], data.service_demandeur)
     _ajouter_historique(db, da.id, user.id, ActionHistorique.CREATION)
     await db.flush()
     return await _get_da_or_404(db, da.id)
+
+
+async def _enregistrer_designations_catalogue(db: AsyncSession, designations: list[str], service: str | None) -> None:
+    """Catalogue par service (voir Paramètres > Désignations articles) :
+    tout article tapé qui n'existe pas encore pour ce service (ni en global)
+    est ajouté automatiquement, pour que les prochaines demandes du même
+    service le retrouvent en suggestion sans intervention de l'admin."""
+    service = (service or "").strip() or None
+    if not service:
+        return
+    for designation in designations:
+        valeur = (designation or "").strip()
+        if not valeur:
+            continue
+        result = await db.execute(
+            select(ValeurPredéfinie).where(
+                ValeurPredéfinie.categorie == 'designation',
+                ValeurPredéfinie.valeur == valeur,
+                (ValeurPredéfinie.service == service) | (ValeurPredéfinie.service.is_(None)),
+            )
+        )
+        if result.scalar_one_or_none():
+            continue
+        db.add(ValeurPredéfinie(categorie='designation', valeur=valeur, service=service))
 
 
 async def soumettre_demande(db: AsyncSession, da_id: int, user: Utilisateur) -> DemandeAchat:
@@ -242,7 +268,7 @@ async def valider_daf(db: AsyncSession, da_id: int, user: Utilisateur, commentai
 
     async def envoyer_email():
         try:
-            await notifier_demandeur(demandeur_email, numero, "approuvée par le DAF", comm)
+            await notifier_demandeur(demandeur_email, numero, "approuvée par le DOS", comm)
         except Exception:
             pass
 
@@ -266,7 +292,7 @@ async def rejeter_daf(db: AsyncSession, da_id: int, user: Utilisateur, commentai
 
     async def envoyer_email():
         try:
-            await notifier_demandeur(demandeur_email, numero, "rejetée par le DAF", commentaire)
+            await notifier_demandeur(demandeur_email, numero, "rejetée par le DOS", commentaire)
         except Exception:
             pass
 
@@ -598,6 +624,7 @@ async def modifier_demande(
                 reference_marque=getattr(l, 'reference_marque', None),
                 description_technique=getattr(l, 'description_technique', None),
             ))
+        await _enregistrer_designations_catalogue(db, [l.designation for l in data.lignes], da.service_demandeur)
 
     # Si la DA était rejetée, elle repasse en brouillon pour être soumise à nouveau
     if da.statut == StatutDA.REJETEE:

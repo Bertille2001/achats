@@ -222,7 +222,7 @@ export default function ToutesDaPage() {
             <option value="">Tous les statuts</option>
             <option value="brouillon">Brouillon</option>
             <option value="att_responsable">Att. responsable</option>
-            <option value="att_daf">Att. DAF</option>
+            <option value="att_daf">Att. DOS</option>
             <option value="approuvee">Approuvée</option>
             <option value="rejetee">Rejetée</option>
             <option value="recue">Reçue</option>

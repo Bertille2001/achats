@@ -25,7 +25,7 @@ export interface SortiePharmacieForm { date_sortie: string; service: string; com
 
 export const MOTIF_LABELS: Record<MotifDA, string> = { reappro: 'Réapprovisionnement régulier', nouveau_besoin: 'Nouveau besoin', commande_specifique: 'Commande spécifique patient', remplacement: 'Remplacement / Panne', activite_urgente: 'Activité urgente' }
 export const URGENCE_LABELS: Record<UrgenceDA, string> = { haute: 'Haute (24h)', moyenne: 'Moyenne (48h)', faible: 'Faible (>72h)' }
-export const STATUT_LABELS: Record<StatutDA, string> = { brouillon: 'Brouillon', soumise: 'Soumise', att_responsable: 'Att. responsable', att_daf: 'Att. DAF', approuvee: 'Approuvée', rejetee: 'Rejetée', recue: 'Reçue' }
+export const STATUT_LABELS: Record<StatutDA, string> = { brouillon: 'Brouillon', soumise: 'Soumise', att_responsable: 'Att. responsable', att_daf: 'Att. DOS', approuvee: 'Approuvée', rejetee: 'Rejetée', recue: 'Reçue' }
 export const STATUT_COLORS: Record<StatutDA, string> = {
   brouillon: '#8a96a3',        // gris — pas encore engagé
   soumise: '#0B3C7A',          // bleu — en circuit

@@ -210,6 +210,12 @@ class ValeurPredéfinie(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     categorie: Mapped[str] = mapped_column(String(50), index=True)
     valeur: Mapped[str] = mapped_column(String(300))
+    # Utilisé uniquement pour la catégorie 'designation' : rattache un article
+    # au service qui l'utilise habituellement (catalogue par service). NULL =
+    # visible pour tous les services (comportement des autres catégories,
+    # inchangé). Un article tapé qui n'existe pas encore pour ce service est
+    # ajouté automatiquement ici lors de la création d'une demande.
+    service: Mapped[str | None] = mapped_column(String(100), nullable=True)
     cree_le: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
 

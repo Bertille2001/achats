@@ -55,6 +55,12 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
   const [designations, setDesignations] = useState<string[]>([])
   const [unites, setUnites] = useState<string[]>([])
 
+  // Rôles à vision globale (DOS, responsable, achats, admin...) : voient le
+  // catalogue de désignations de tous les services. Les autres (demandeur,
+  // pharmacien) ne voient que celui de leur propre service — plus les
+  // valeurs déjà utilisées par ce service et les valeurs globales.
+  const voitToutesLesDesignations = ['responsable', 'daf', 'acheteur', 'admin'].includes(utilisateur?.role || '')
+
   useEffect(() => {
     Promise.all([
       client.get<string[]>('/autocomplete/services'),
@@ -62,14 +68,22 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
       client.get<string[]>('/autocomplete/fournisseurs'),
       client.get<string[]>('/autocomplete/normes'),
       client.get<string[]>('/autocomplete/lieux'),
-      client.get<string[]>('/autocomplete/designations'),
       client.get<string[]>('/autocomplete/unites'),
-    ]).then(([s, p, f, n, l, d, u]) => {
+    ]).then(([s, p, f, n, l, u]) => {
       setServices(s.data); setPostes(p.data)
       setFournisseurs(f.data); setNormes(n.data)
-      setLieux(l.data); setDesignations(d.data); setUnites(u.data)
+      setLieux(l.data); setUnites(u.data)
     }).catch(() => {})
   }, [])
+
+  useEffect(() => {
+    const params = (!voitToutesLesDesignations && form.service_demandeur.trim())
+      ? { service: form.service_demandeur.trim() } : {}
+    client.get<string[]>('/autocomplete/designations', { params })
+      .then(r => setDesignations(r.data))
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voitToutesLesDesignations, form.service_demandeur])
 
   const set = <K extends keyof DemandeAchatForm>(k: K, v: DemandeAchatForm[K]) =>
     setForm(f => ({ ...f, [k]: v }))

@@ -270,7 +270,7 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
     vd = [
         [Pb('Visa', alignment=TA_CENTER), Pb('Signature', alignment=TA_CENTER), Pb('Date', alignment=TA_CENTER)],
         [P('Responsable du service demandeur'), P(cell_decision(resp)), P(cell_date(resp), alignment=TA_CENTER)],
-        [P('DAF'), P(cell_decision(daf)), P(cell_date(daf), alignment=TA_CENTER)],
+        [P('DOS'), P(cell_decision(daf)), P(cell_date(daf), alignment=TA_CENTER)],
     ]
     vt = Table(vd, colWidths=[5*cm, 8*cm, 3*cm], rowHeights=[0.65*cm, 1.3*cm, 1.3*cm])
     base_tbl(vt)

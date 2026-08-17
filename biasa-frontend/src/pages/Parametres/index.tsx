@@ -11,13 +11,39 @@ const CATEGORIES = [
   { key: 'unite', label: 'Unités' },
 ]
 
-interface Val { id: number; valeur: string }
+// Les 16 services de la clinique — catégories du catalogue d'articles
+// (chaque désignation peut être rattachée à l'un d'eux, ou laissée "Tous
+// services" pour rester visible partout, comme avant cette fonctionnalité).
+const SERVICES_CATALOGUE = [
+  'Bloc opératoire et salle d\'Endoscopie',
+  'Centre de Fertilité',
+  'Comptabilité',
+  'Contrôle de gestion',
+  'Gynecologie-obstétrique et Maternité',
+  'Hospitalisation Adultes et Soins à Domicile',
+  'Imagerie Médicale',
+  'Laboratoire de Biologie Médicales',
+  'Moyens Généraux',
+  'Pédiatrie et Néonatologie',
+  'Pharmacie',
+  'Bilan de santé et Services Interentreprises',
+  'Service des ressources humaines',
+  'Service informatique',
+  'Service Portes Consultations et soins externes',
+  'Urgences et Soins Intensifs',
+]
+
+interface Val { id: number; valeur: string; service?: string | null }
 
 export default function ParametresPage() {
   const [categorie, setCategorie] = useState('service')
   const [vals, setVals] = useState<Val[]>([])
   const [nouvelle, setNouvelle] = useState('')
+  const [nouveauService, setNouveauService] = useState('')
+  const [filtreService, setFiltreService] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const estDesignations = categorie === 'designation'
 
   const charger = async (cat: string) => {
     setLoading(true)
@@ -29,10 +55,14 @@ export default function ParametresPage() {
 
   useEffect(() => { charger(categorie) }, [categorie])
 
+  const valsAffichees = estDesignations && filtreService
+    ? vals.filter(v => v.service === filtreService || !v.service)
+    : vals
+
   const ajouter = async () => {
     if (!nouvelle.trim()) return
     try {
-      await client.post('/parametres/', { categorie, valeur: nouvelle.trim() })
+      await client.post('/parametres/', { categorie, valeur: nouvelle.trim(), service: estDesignations ? (nouveauService || null) : null })
       setNouvelle('')
       charger(categorie)
     } catch (e: any) {
@@ -73,30 +103,61 @@ export default function ParametresPage() {
 
         {/* Valeurs */}
         <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 8 }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
             <input
               value={nouvelle}
               onChange={e => setNouvelle(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && ajouter()}
               placeholder={`Ajouter une valeur pour "${CATEGORIES.find(c => c.key === categorie)?.label}"…`}
-              style={{ flex: 1, fontSize: 13.5, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+              style={{ flex: 1, minWidth: 200, fontSize: 13.5, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
             />
+            {estDesignations && (
+              <select
+                value={nouveauService}
+                onChange={e => setNouveauService(e.target.value)}
+                style={{ fontSize: 13.5, padding: '7px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              >
+                <option value="">Tous services</option>
+                {SERVICES_CATALOGUE.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            )}
             <button onClick={ajouter} style={{ padding: '7px 16px', fontSize: 13.5, border: 'none', borderRadius: 6, background: '#0B3C7A', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>
               Ajouter
             </button>
           </div>
 
+          {estDesignations && (
+            <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>Filtrer par service :</span>
+              <select
+                value={filtreService}
+                onChange={e => setFiltreService(e.target.value)}
+                style={{ fontSize: 12.5, padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 5, background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              >
+                <option value="">Tous</option>
+                {SERVICES_CATALOGUE.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          )}
+
           {loading ? (
             <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13.5 }}>Chargement…</div>
-          ) : vals.length === 0 ? (
+          ) : valsAffichees.length === 0 ? (
             <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13.5 }}>
               Aucune valeur enregistrée. Ajoutez-en une ci-dessus.
             </div>
           ) : (
             <div>
-              {vals.map(v => (
+              {valsAffichees.map(v => (
                 <div key={v.id} style={{ display: 'flex', alignItems: 'center', padding: '9px 16px', borderBottom: '1px solid var(--border)' }}>
-                  <div style={{ flex: 1, fontSize: 13.5 }}>{v.valeur}</div>
+                  <div style={{ flex: 1, fontSize: 13.5 }}>
+                    {v.valeur}
+                    {estDesignations && (
+                      <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: 4, padding: '1px 6px' }}>
+                        {v.service || 'Tous services'}
+                      </span>
+                    )}
+                  </div>
                   <button onClick={() => supprimer(v.id)} style={{ padding: '3px 8px', fontSize: 12.5, border: '1px solid var(--border)', borderRadius: 5, background: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                     Supprimer
                   </button>

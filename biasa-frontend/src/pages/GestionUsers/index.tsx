@@ -37,7 +37,7 @@ const fmtRelatif = (iso: string) => {
 
 const ROLES: Role[] = ['demandeur', 'responsable', 'daf', 'acheteur', 'pharmacien', 'admin']
 const ROLE_LABELS: Record<Role, string> = {
-  demandeur: 'Demandeur', responsable: 'Responsable', daf: 'DAF',
+  demandeur: 'Demandeur', responsable: 'Responsable', daf: 'DOS',
   acheteur: 'Acheteur', pharmacien: 'Pharmacien', admin: 'Admin',
 }
 

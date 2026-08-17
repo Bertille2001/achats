@@ -17,6 +17,9 @@ router = APIRouter(prefix="/parametres", tags=["Paramètres"])
 class ValeurCreate(BaseModel):
     categorie: str
     valeur: str
+    # Seulement pertinent pour categorie='designation' : rattache l'article à
+    # un service (catalogue par service). None/absent = visible pour tous.
+    service: str | None = None
 
 
 def admin_only(current_user=Depends(get_current_user)):
@@ -26,29 +29,36 @@ def admin_only(current_user=Depends(get_current_user)):
 
 
 @router.get("/{categorie}")
-async def liste(categorie: str, db: AsyncSession = Depends(get_db), _=Depends(get_current_user)):
-    result = await db.execute(
-        select(ValeurPredéfinie)
-        .where(ValeurPredéfinie.categorie == categorie)
-        .order_by(ValeurPredéfinie.valeur)
-    )
-    return [{"id": v.id, "valeur": v.valeur} for v in result.scalars().all()]
+async def liste(
+    categorie: str, service: str | None = None,
+    db: AsyncSession = Depends(get_db), _=Depends(get_current_user),
+):
+    """Sans `service` : toutes les valeurs de la catégorie (vue admin). Avec
+    `service` : uniquement celles rattachées à ce service, plus celles sans
+    service (globales) — utilisé pour filtrer les désignations par service."""
+    query = select(ValeurPredéfinie).where(ValeurPredéfinie.categorie == categorie)
+    if service:
+        query = query.where((ValeurPredéfinie.service == service) | (ValeurPredéfinie.service.is_(None)))
+    result = await db.execute(query.order_by(ValeurPredéfinie.valeur))
+    return [{"id": v.id, "valeur": v.valeur, "service": v.service} for v in result.scalars().all()]
 
 
 @router.post("/", status_code=201)
 async def creer(data: ValeurCreate, db: AsyncSession = Depends(get_db), current_user=Depends(admin_only)):
+    service = (data.service or "").strip() or None
     result = await db.execute(
         select(ValeurPredéfinie).where(
             ValeurPredéfinie.categorie == data.categorie,
-            ValeurPredéfinie.valeur == data.valeur.strip()
+            ValeurPredéfinie.valeur == data.valeur.strip(),
+            ValeurPredéfinie.service == service,
         )
     )
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Cette valeur existe déjà")
-    v = ValeurPredéfinie(categorie=data.categorie, valeur=data.valeur.strip())
+    v = ValeurPredéfinie(categorie=data.categorie, valeur=data.valeur.strip(), service=service)
     db.add(v)
     await db.flush()
-    return {"id": v.id, "valeur": v.valeur}
+    return {"id": v.id, "valeur": v.valeur, "service": v.service}
 
 
 @router.delete("/{valeur_id}")
