@@ -129,33 +129,26 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
 
   const isMed = form.type_da === 'medical'
 
-  // Les demandes « Biens et Consommables Médicaux » passent par la Pharmacie
-  // (qui centralise ce stock pour tous les services, y compris le labo) —
-  // seul le service Pharmacie ou un admin peut donc choisir ce type.
-  const peutMedical = utilisateur?.role === 'admin' || form.service_demandeur.trim().toLowerCase() === 'pharmacie'
-
-  useEffect(() => {
-    if (!peutMedical && form.type_da === 'medical') set('type_da', 'bien_service')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [peutMedical])
+  // Formulaire unifié : mêmes champs requis quel que soit le type de demande
+  // (médical ou bien/service), et n'importe quel service connecté peut créer
+  // une demande médicale — pas de restriction par service ici.
 
   // Validation — seuls les champs vraiment indispensables sont obligatoires :
   // le service, le motif/urgence (déjà pré-remplis) et au moins un article avec
-  // une désignation et une quantité. Le reste (poste, justification détaillée,
-  // normes, fournisseur, observations…) reste utile mais facultatif : on ne
-  // bloque pas une demande simple/urgente pour des détails que tout le monde
-  // n'a pas toujours sous la main au moment de la saisie.
+  // une désignation et une quantité. Le reste (poste, lieu d'utilisation,
+  // justification détaillée, normes, fournisseur, observations…) reste utile
+  // mais facultatif : on ne bloque pas une demande simple/urgente pour des
+  // détails que tout le monde n'a pas toujours sous la main au moment de la
+  // saisie.
   const lignesValides = form.lignes.filter(l => l.designation.trim() !== '' && l.quantite > 0)
 
   const formValide =
     form.service_demandeur.trim() !== '' &&
-    lignesValides.length > 0 &&
-    (isMed || form.lieu_utilisation.trim() !== '')
+    lignesValides.length > 0
 
   const erreurChamp = () => {
     if (!form.service_demandeur.trim()) return 'Service requis'
     if (lignesValides.length === 0) return 'Au moins un article avec désignation et quantité est requis'
-    if (!isMed && !form.lieu_utilisation.trim()) return "Lieu d'utilisation requis"
     return ''
   }
 
@@ -206,7 +199,7 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
           <div style={{ padding: 18 }}>
             <div style={{ border: '1px solid rgba(0,0,0,0.08)', borderRadius: 8, overflow: 'hidden' }}>
               {[
-                ['Type', isMed ? 'Médical & Consommables' : 'Bien / Service'],
+                ['Type', LABEL_TYPE_DA[form.type_da]],
                 ['Service', form.service_demandeur],
                 ['Urgence', form.urgence],
                 ['Motif', form.motif],
@@ -244,7 +237,7 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
           <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontSize: 15.5, fontWeight: 600, color: '#0B3C7A' }}>Nouvelle demande d'achat</div>
-              <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 2 }}>Le service, au moins un article (désignation + quantité){!isMed && ' et le lieu d\'utilisation'} sont requis ; le reste est facultatif</div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-secondary)', marginTop: 2 }}>Le service et au moins un article (désignation + quantité) sont requis ; le reste est facultatif</div>
             </div>
             <button onClick={onClose} style={{ width: 28, height: 28, border: '1px solid rgba(0,0,0,0.12)', borderRadius: 6, background: 'transparent', cursor: 'pointer', fontSize: 17.5, color: 'var(--text-secondary)' }}>×</button>
           </div>
@@ -253,26 +246,16 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
 
             <ST>Type de demande</ST>
             <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-              {(['bien_service', 'medical'] as TypeDA[]).map(t => {
-                const desactive = t === 'medical' && !peutMedical
-                return (
-                  <button
-                    key={t}
-                    onClick={() => !desactive && set('type_da', t)}
-                    disabled={desactive}
-                    title={desactive ? 'Réservé au service Pharmacie' : undefined}
-                    style={{ flex: 1, padding: 10, outline: form.type_da === t ? '2px solid #0B3C7A' : 'none', outlineOffset: form.type_da === t ? '-2px' : '0', borderRadius: 8, cursor: desactive ? 'not-allowed' : 'pointer', fontSize: 13.5, background: form.type_da === t ? '#0B3C7A' : desactive ? '#f1f3f5' : '#eaf2fb', color: form.type_da === t ? '#fff' : desactive ? '#adb5bd' : '#5e6f85', fontWeight: form.type_da === t ? 600 : 400 }}
-                  >
-                    {LABEL_TYPE_DA[t]}
-                  </button>
-                )
-              })}
+              {(['bien_service', 'medical'] as TypeDA[]).map(t => (
+                <button
+                  key={t}
+                  onClick={() => set('type_da', t)}
+                  style={{ flex: 1, padding: 10, outline: form.type_da === t ? '2px solid #0B3C7A' : 'none', outlineOffset: form.type_da === t ? '-2px' : '0', borderRadius: 8, cursor: 'pointer', fontSize: 13.5, background: form.type_da === t ? '#0B3C7A' : '#eaf2fb', color: form.type_da === t ? '#fff' : '#5e6f85', fontWeight: form.type_da === t ? 600 : 400 }}
+                >
+                  {LABEL_TYPE_DA[t]}
+                </button>
+              ))}
             </div>
-            {!peutMedical && (
-              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>
-                « Biens et Consommables Médicaux » est réservé au service Pharmacie.
-              </div>
-            )}
 
             <ST>Informations générales</ST>
             <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px', marginBottom: 4 }}>
@@ -321,7 +304,7 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
                       <td style={mtd}><span style={{ fontSize: 12.5, color: 'var(--text-muted)', padding: '0 4px' }}>{l.numero_ligne}</span></td>
                       <td style={mtd}><input value={l.designation} onChange={e => setLigne(i,'designation',e.target.value)} placeholder="Nom complet" list="ac-designations" style={inp} /></td>
                       <td style={mtd}><input type="number" min={1} value={l.quantite} onChange={e => setLigne(i,'quantite',Number(e.target.value))} style={{...inp,width:50}} /></td>
-                      <td style={mtd}><input value={l.unite} onChange={e => setLigne(i,'unite',e.target.value)} placeholder="Boîte…" list="ac-unites" style={inp} /></td>
+                      <td style={mtd}><input value={l.unite} onChange={e => setLigne(i,'unite',e.target.value)} placeholder="Unité…" list="ac-unites" style={inp} /></td>
                       {isMed ? <>
                         <td style={mtd}><input value={l.stock_actuel} onChange={e => setLigne(i,'stock_actuel',e.target.value)} placeholder="Approx." style={inp} /></td>
                         <td style={mtd}><input value={l.reference_marque} onChange={e => setLigne(i,'reference_marque',e.target.value)} placeholder="Réf." style={inp} /></td>
@@ -365,7 +348,7 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
 
             {!isMed && <>
               <ST>Lieu d'utilisation</ST>
-              <FL label="Service, salle, localisation (plusieurs possibles)" required style={{ marginBottom: 12 }}>
+              <FL label="Service, salle, localisation (plusieurs possibles)" style={{ marginBottom: 12 }}>
                 <div ref={lieuxRef} style={{ position: 'relative' }}>
                   <div
                     onClick={() => setLieuxOuvert(o => !o)}

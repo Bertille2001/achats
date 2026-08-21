@@ -185,7 +185,7 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
             Pb('N°', alignment=TA_CENTER),
             Pb('Désignation de l\'article\n(Nom complet)', alignment=TA_CENTER),
             Pb('Qté\ndemandée', alignment=TA_CENTER),
-            Pb('Unité\n(Boîte, Pièce, Kit)', alignment=TA_CENTER),
+            Pb('Unité', alignment=TA_CENTER),
             Pb('Stock actuel\n(Approximatif)', alignment=TA_CENTER),
             Pb('Réf. Fournisseur /\nMarque (Si connue)', alignment=TA_CENTER),
             Pb('Observation', alignment=TA_CENTER),
