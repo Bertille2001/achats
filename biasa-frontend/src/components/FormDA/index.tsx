@@ -127,11 +127,10 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
   }
   const supprimerFichier = (i: number) => setFichiers(prev => prev.filter((_, idx) => idx !== i))
 
-  const isMed = form.type_da === 'medical'
-
-  // Formulaire unifié : mêmes champs requis quel que soit le type de demande
-  // (médical ou bien/service), et n'importe quel service connecté peut créer
-  // une demande médicale — pas de restriction par service ici.
+  // Formulaire entièrement unifié : mêmes champs, mêmes colonnes d'articles
+  // et mêmes règles quel que soit le type de demande (médical ou bien/
+  // service) — seul le badge "Type" change. N'importe quel service connecté
+  // peut créer une demande médicale, aucune restriction par service ici.
 
   // Validation — seuls les champs vraiment indispensables sont obligatoires :
   // le service, le motif/urgence (déjà pré-remplis) et au moins un article avec
@@ -293,7 +292,7 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
               <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: 12.5 }}>
                 <thead>
                   <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)' }}>
-                    {['N°','Désignation *','Qté *','Unité',...(isMed ? ['Stock actuel','Réf. / Marque'] : ['Description technique']),'Obs.'].map(h => (
+                    {['N°','Désignation *','Qté *','Unité','Stock actuel','Réf. / Marque','Description technique','Obs.'].map(h => (
                       <th key={h} style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-secondary)', padding: '7px 6px', borderBottom: '1px solid rgba(0,0,0,0.08)', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -305,10 +304,9 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
                       <td style={mtd}><input value={l.designation} onChange={e => setLigne(i,'designation',e.target.value)} placeholder="Nom complet" list="ac-designations" style={inp} /></td>
                       <td style={mtd}><input type="number" min={1} value={l.quantite} onChange={e => setLigne(i,'quantite',Number(e.target.value))} style={{...inp,width:50}} /></td>
                       <td style={mtd}><input value={l.unite} onChange={e => setLigne(i,'unite',e.target.value)} placeholder="Unité…" list="ac-unites" style={inp} /></td>
-                      {isMed ? <>
-                        <td style={mtd}><input value={l.stock_actuel} onChange={e => setLigne(i,'stock_actuel',e.target.value)} placeholder="Approx." style={inp} /></td>
-                        <td style={mtd}><input value={l.reference_marque} onChange={e => setLigne(i,'reference_marque',e.target.value)} placeholder="Réf." style={inp} /></td>
-                      </> : <td style={mtd}><input value={l.description_technique} onChange={e => setLigne(i,'description_technique',e.target.value)} placeholder="Détails…" style={inp} /></td>}
+                      <td style={mtd}><input value={l.stock_actuel} onChange={e => setLigne(i,'stock_actuel',e.target.value)} placeholder="Approx." style={inp} /></td>
+                      <td style={mtd}><input value={l.reference_marque} onChange={e => setLigne(i,'reference_marque',e.target.value)} placeholder="Réf." style={inp} /></td>
+                      <td style={mtd}><input value={l.description_technique} onChange={e => setLigne(i,'description_technique',e.target.value)} placeholder="Détails…" style={inp} /></td>
                       <td style={mtd}><input value={l.observation} onChange={e => setLigne(i,'observation',e.target.value)} placeholder="Note" style={inp} /></td>
                     </tr>
                   ))}
@@ -319,34 +317,32 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
             <datalist id="ac-designations">{designations.map(d => <option key={d} value={d} />)}</datalist>
             <datalist id="ac-unites">{unites.map(u => <option key={u} value={u} />)}</datalist>
 
-            {isMed && <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, marginBottom: detailsOuvert ? 12 : 4 }}>
-                <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '.5px', textTransform: 'uppercase' as const }}>Spécifications techniques (facultatif)</div>
-                <button type="button" onClick={() => setDetailsOuvert(o => !o)} style={{ fontSize: 12.5, color: '#0B3C7A', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500, padding: '2px 0' }}>
-                  {detailsOuvert ? 'Masquer −' : 'Plus de détails +'}
-                </button>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, marginBottom: detailsOuvert ? 12 : 4 }}>
+              <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--text-muted)', letterSpacing: '.5px', textTransform: 'uppercase' as const }}>Spécifications techniques (facultatif)</div>
+              <button type="button" onClick={() => setDetailsOuvert(o => !o)} style={{ fontSize: 12.5, color: '#0B3C7A', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500, padding: '2px 0' }}>
+                {detailsOuvert ? 'Masquer −' : 'Plus de détails +'}
+              </button>
+            </div>
+            {detailsOuvert && (
+              <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px', marginBottom: 4 }}>
+                <FL label="Normes / certifications">
+                  <input value={form.normes_certifications} onChange={e => set('normes_certifications', e.target.value)} placeholder="CE, FDA, ISO…" list="ac-normes" style={inpStyle} />
+                  <datalist id="ac-normes">{normes.map(n => <option key={n} value={n} />)}</datalist>
+                </FL>
+                <FL label="Date de réception souhaitée (au plus tard)">
+                  <input type="date" value={form.date_peremption_min} onChange={e => set('date_peremption_min', e.target.value)} style={inpStyle} />
+                </FL>
+                <FL label="Fournisseur suggéré" style={{ gridColumn: '1 / -1' }}>
+                  <input value={form.fournisseur_suggere} onChange={e => set('fournisseur_suggere', e.target.value)} placeholder="Nom du fournisseur" list="ac-fournisseurs" style={inpStyle} />
+                  <datalist id="ac-fournisseurs">{fournisseurs.map(f => <option key={f} value={f} />)}</datalist>
+                </FL>
+                <FL label="Autres précisions" style={{ gridColumn: '1 / -1' }}>
+                  <input value={form.autres_specs} onChange={e => set('autres_specs', e.target.value)} placeholder="Conditionnement, taille, couleur…" style={inpStyle} />
+                </FL>
               </div>
-              {detailsOuvert && (
-                <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px', marginBottom: 4 }}>
-                  <FL label="Normes / certifications">
-                    <input value={form.normes_certifications} onChange={e => set('normes_certifications', e.target.value)} placeholder="CE, FDA, ISO…" list="ac-normes" style={inpStyle} />
-                    <datalist id="ac-normes">{normes.map(n => <option key={n} value={n} />)}</datalist>
-                  </FL>
-                  <FL label="Date de réception souhaitée (au plus tard)">
-                    <input type="date" value={form.date_peremption_min} onChange={e => set('date_peremption_min', e.target.value)} style={inpStyle} />
-                  </FL>
-                  <FL label="Fournisseur suggéré" style={{ gridColumn: '1 / -1' }}>
-                    <input value={form.fournisseur_suggere} onChange={e => set('fournisseur_suggere', e.target.value)} placeholder="Nom du fournisseur" list="ac-fournisseurs" style={inpStyle} />
-                    <datalist id="ac-fournisseurs">{fournisseurs.map(f => <option key={f} value={f} />)}</datalist>
-                  </FL>
-                  <FL label="Autres précisions" style={{ gridColumn: '1 / -1' }}>
-                    <input value={form.autres_specs} onChange={e => set('autres_specs', e.target.value)} placeholder="Conditionnement, taille, couleur…" style={inpStyle} />
-                  </FL>
-                </div>
-              )}
-            </>}
+            )}
 
-            {!isMed && <>
+            <>
               <ST>Lieu d'utilisation</ST>
               <FL label="Service, salle, localisation (plusieurs possibles)" style={{ marginBottom: 12 }}>
                 <div ref={lieuxRef} style={{ position: 'relative' }}>
@@ -388,7 +384,7 @@ export default function FormDA({ onClose, onSuccess, valeurInitiale, onSubmit: o
                   )}
                 </div>
               </FL>
-            </>}
+            </>
 
             <ST>Pièces jointes (facultatif)</ST>
             <div onClick={() => fileInputRef.current?.click()} style={{ border: '1px dashed rgba(0,0,0,0.15)', borderRadius: 8, padding: '16px', textAlign: 'center', cursor: 'pointer', marginBottom: 10, background: 'var(--bg-secondary)' }}>

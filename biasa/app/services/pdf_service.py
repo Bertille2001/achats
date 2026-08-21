@@ -180,77 +180,55 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
         fontSize=9, textColor=BLEU, spaceBefore=2, spaceAfter=4))
     lignes = da.get('lignes', [])
 
-    if is_medical:
-        header = [
-            Pb('N°', alignment=TA_CENTER),
-            Pb('Désignation de l\'article\n(Nom complet)', alignment=TA_CENTER),
-            Pb('Qté\ndemandée', alignment=TA_CENTER),
-            Pb('Unité', alignment=TA_CENTER),
-            Pb('Stock actuel\n(Approximatif)', alignment=TA_CENTER),
-            Pb('Réf. Fournisseur /\nMarque (Si connue)', alignment=TA_CENTER),
-            Pb('Observation', alignment=TA_CENTER),
-        ]
-        rows = [header]
-        for i, l in enumerate(lignes[:10], 1):
-            rows.append([
-                P(str(i), alignment=TA_CENTER),
-                P(str(l.get('designation', ''))),
-                P(str(l.get('quantite', '')), alignment=TA_CENTER),
-                P(str(l.get('unite', '')), alignment=TA_CENTER),
-                P(str(l.get('stock_actuel', '')), alignment=TA_CENTER),
-                P(str(l.get('reference_marque', ''))),
-                P(str(l.get('observation', ''))),
-            ])
-        t = Table(rows,
-                  colWidths=[0.6*cm, 4.2*cm, 1.4*cm, 1.8*cm, 1.9*cm, 2.7*cm, 3.4*cm],
-                  rowHeights=[0.9*cm] + [0.6*cm] * min(len(lignes), 10))
-    else:
-        header = [
-            Pb('N°', alignment=TA_CENTER),
-            Pb('Désignation du besoin / service', alignment=TA_CENTER),
-            Pb('Qté', alignment=TA_CENTER),
-            Pb('Unité', alignment=TA_CENTER),
-            Pb('Description technique / détails', alignment=TA_CENTER),
-            Pb('Observation', alignment=TA_CENTER),
-        ]
-        rows = [header]
-        for i, l in enumerate(lignes[:10], 1):
-            rows.append([
-                P(str(i), alignment=TA_CENTER),
-                P(str(l.get('designation', ''))),
-                P(str(l.get('quantite', '')), alignment=TA_CENTER),
-                P(str(l.get('unite', ''))),
-                P(str(l.get('description_technique', ''))),
-                P(str(l.get('observation', ''))),
-            ])
-        t = Table(rows,
-                  colWidths=[0.6*cm, 3.5*cm, 1.2*cm, 1.4*cm, 5.7*cm, 3.6*cm],
-                  rowHeights=[0.9*cm] + [0.6*cm] * min(len(lignes), 10))
+    # Formulaire unifié : mêmes colonnes quel que soit le type de demande
+    # (médical ou bien/service) — is_medical ne change plus que le sous-titre
+    # en haut de la fiche, pas la structure du tableau.
+    header = [
+        Pb('N°', alignment=TA_CENTER),
+        Pb('Désignation de l\'article / du besoin', alignment=TA_CENTER),
+        Pb('Qté', alignment=TA_CENTER),
+        Pb('Unité', alignment=TA_CENTER),
+        Pb('Stock actuel\n(Approximatif)', alignment=TA_CENTER),
+        Pb('Réf. / Marque\n(Si connue)', alignment=TA_CENTER),
+        Pb('Description technique\n/ détails', alignment=TA_CENTER),
+        Pb('Observation', alignment=TA_CENTER),
+    ]
+    rows = [header]
+    for i, l in enumerate(lignes[:10], 1):
+        rows.append([
+            P(str(i), alignment=TA_CENTER),
+            P(str(l.get('designation', ''))),
+            P(str(l.get('quantite', '')), alignment=TA_CENTER),
+            P(str(l.get('unite', '')), alignment=TA_CENTER),
+            P(str(l.get('stock_actuel', '')), alignment=TA_CENTER),
+            P(str(l.get('reference_marque', ''))),
+            P(str(l.get('description_technique', ''))),
+            P(str(l.get('observation', ''))),
+        ])
+    t = Table(rows,
+              colWidths=[0.6*cm, 3.0*cm, 1.0*cm, 1.2*cm, 1.5*cm, 2.0*cm, 2.7*cm, 4.0*cm],
+              rowHeights=[0.9*cm] + [0.6*cm] * min(len(lignes), 10))
 
     base_tbl(t)
     story.append(t)
     story.append(Spacer(1, 0.25*cm))
 
-    # ── 4. SPÉCIFICATIONS / LIEU ─────────────────────────────────────────
-    if is_medical:
-        story.append(Pb('Spécifications Techniques',
-            fontSize=9, textColor=BLEU, spaceBefore=2, spaceAfter=4))
-        specs = []
-        if da.get('normes_certifications'):
-            specs.append(f"• Normes / Certifications exigées : {da['normes_certifications']}")
-        if da.get('date_peremption_min'):
-            specs.append(f"• Date de péremption minimale : {da['date_peremption_min']}")
-        if da.get('fournisseur_suggere'):
-            specs.append(f"• Fournisseur suggéré : {da['fournisseur_suggere']}")
-        if da.get('autres_specs'):
-            specs.append(f"• Autres spécifications : {da['autres_specs']}")
-        txt = '\n'.join(specs) if specs else ' '
-    else:
-        story.append(Pb('Lieu d\'utilisation / d\'exécution',
-            fontSize=9, textColor=BLEU, spaceBefore=2, spaceAfter=4))
-        txt = da.get('lieu_utilisation', ' ')
+    # ── 4. SPÉCIFICATIONS ET LIEU ────────────────────────────────────────
+    # Toujours les deux blocs, quel que soit le type — formulaire unifié.
+    story.append(Pb('Spécifications techniques',
+        fontSize=9, textColor=BLEU, spaceBefore=2, spaceAfter=4))
+    specs = []
+    if da.get('normes_certifications'):
+        specs.append(f"• Normes / Certifications exigées : {da['normes_certifications']}")
+    if da.get('date_peremption_min'):
+        specs.append(f"• Date de réception souhaitée (au plus tard) : {da['date_peremption_min']}")
+    if da.get('fournisseur_suggere'):
+        specs.append(f"• Fournisseur suggéré : {da['fournisseur_suggere']}")
+    if da.get('autres_specs'):
+        specs.append(f"• Autres spécifications : {da['autres_specs']}")
+    txt_specs = '\n'.join(specs) if specs else ' '
 
-    spec_t = Table([[P(txt)]], colWidths=[16*cm])
+    spec_t = Table([[P(txt_specs)]], colWidths=[16*cm])
     spec_t.setStyle(TableStyle([
         ('BOX', (0,0), (-1,-1), 0.5, GRIS_BORD),
         ('MINROWHEIGHT', (0,0), (-1,-1), 1.2*cm),
@@ -258,6 +236,20 @@ def build_pdf(da: dict, is_medical: bool) -> bytes:
         ('LEFTPADDING', (0,0), (-1,-1), 8),
     ]))
     story.append(spec_t)
+    story.append(Spacer(1, 0.15*cm))
+
+    story.append(Pb('Lieu d\'utilisation / d\'exécution',
+        fontSize=9, textColor=BLEU, spaceBefore=2, spaceAfter=4))
+    txt_lieu = da.get('lieu_utilisation') or ' '
+
+    lieu_t = Table([[P(txt_lieu)]], colWidths=[16*cm])
+    lieu_t.setStyle(TableStyle([
+        ('BOX', (0,0), (-1,-1), 0.5, GRIS_BORD),
+        ('MINROWHEIGHT', (0,0), (-1,-1), 1.2*cm),
+        ('TOPPADDING', (0,0), (-1,-1), 5),
+        ('LEFTPADDING', (0,0), (-1,-1), 8),
+    ]))
+    story.append(lieu_t)
     story.append(Spacer(1, 0.25*cm))
 
     # ── 5. VALIDATION HIÉRARCHIQUE ────────────────────────────────────────
